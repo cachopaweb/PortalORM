@@ -66,7 +66,7 @@ implementation
 { TDatabase }
 
 uses
-  UnitConstantes,
+  UnitConstants,
   UnitConnection.Firedac.Model,
   UnitFactory.Connection.Firedac;
 
