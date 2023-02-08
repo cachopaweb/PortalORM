@@ -3,7 +3,7 @@ unit UnitFormRTTI.Interfaces;
 interface
 
 uses
-  UnitBancoDeDados.Model,
+  UnitPortalORM.Model,
   Vcl.Forms;
 
 type

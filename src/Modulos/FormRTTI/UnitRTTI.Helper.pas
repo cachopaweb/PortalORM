@@ -3,7 +3,7 @@ unit UnitRTTI.Helper;
 interface
 uses
   System.RTTI,
-  UnitBancoDeDados.Model;
+  UnitPortalORM.Model;
 
 type
   TRttiFieldHelper = class helper for TRttiField

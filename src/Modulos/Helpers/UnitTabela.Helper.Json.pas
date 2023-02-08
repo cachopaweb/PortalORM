@@ -5,9 +5,9 @@ interface
 uses
   System.Json,
   System.Threading,
-  UnitBancoDeDados.Model,
+  UnitPortalORM.Model,
   System.Rtti,
-  UnitClienteREST.Model.Interfaces,
+  UnitClientREST.Model.Interfaces,
   System.SysUtils,
   IBX.IBDatabase,
   IBX.IBQuery, System.Generics.Collections;
@@ -33,7 +33,7 @@ implementation
 
 uses
   Rest.Json,
-  UnitClienteREST.Model,
+  UnitClientREST.Model,
   UnitConfiguracaoServidor.Singleton;
 
 { THelperTTabela }
@@ -72,7 +72,7 @@ begin
   FutureResponse := TTask.Future<TClientResult>(
     function: TClientResult
     begin
-      Result := TClienteREST.New(BaseURL).Get()
+      Result := TClientREST.New(BaseURL).Get()
     end);
   if FutureResponse.Value.StatusCode = 200 then
   begin
@@ -131,7 +131,7 @@ var
 begin
   BaseURL := BuscaBaseURL;
   // envia para o servidor
-  Result := TClienteREST.New(BaseURL + '/' + id.ToString).AddHeader('Content-Type', 'application/json').Delete();
+  Result := TClientREST.New(BaseURL + '/' + id.ToString).AddHeader('Content-Type', 'application/json').Delete();
 end;
 
 function THelperTTabelaREST.Post: TClientResult;
@@ -143,7 +143,7 @@ begin
   // transforma em json
   ojson := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes(Self.ToJson), 0) as TJSONObject;
   // envia para o servidor
-  Result := TClienteREST.New(BaseURL).AddHeader('Content-Type', 'application/json').AddBody(ojson).Post();
+  Result := TClientREST.New(BaseURL).AddHeader('Content-Type', 'application/json').AddBody(ojson).Post();
 end;
 
 function THelperTTabelaREST.Put: TClientResult;
@@ -155,7 +155,7 @@ begin
   // transforma em json
   ojson := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes(Self.ToJson), 0) as TJSONObject;
   // envia para o servidor
-  Result := TClienteREST.New(BaseURL).AddHeader('Content-Type', 'application/json').AddBody(ojson).Put();
+  Result := TClientREST.New(BaseURL).AddHeader('Content-Type', 'application/json').AddBody(ojson).Put();
 end;
 
 function THelperTTabelaREST.fromJson<T>(Json: string): T;
@@ -179,7 +179,7 @@ begin
   FutureResponse := TTask.Future<TClientResult>(
     function: TClientResult
     begin
-      Result := TClienteREST.New(BaseURL+'/'+Id.ToString).Get()
+      Result := TClientREST.New(BaseURL+'/'+Id.ToString).Get()
     end);
   if FutureResponse.Value.StatusCode = 200 then
   begin
