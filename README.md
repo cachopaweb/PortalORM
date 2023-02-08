@@ -43,3 +43,61 @@ implementation
 end.
 
 ```
+
+
+## Establishing the database connection
+
+```delphi
+
+unit UnitDatabase;
+
+interface
+uses
+  UnitConnection.Model.Interfaces;
+
+type
+  TDatabase = class
+    class function Connection: iConnection;
+    class function Query: iQuery;
+  end;
+
+implementation
+
+{ TDatabase }
+
+uses
+  UnitConstantes,
+  UnitConnection.Firedac.Model,
+  UnitFactory.Connection.Firedac;
+
+class function TDatabase.Connection: iConnection;
+begin
+  Result := TConnectionFiredac.New(TConstants.BancoDados);
+end;
+
+class function TDatabase.Query: iQuery;
+begin
+  Result := TFactoryConnectionFiredac.New(TConstants.BancoDados).Query;
+end;
+
+end.
+´´´
+
+## Fetching data and saving to the database
+
+```delphi
+var
+  Usuario: TUsuarios;
+begin
+  Usuario := TUsuarios.Create(TDatabase.Connection);
+  Usuario.BuscaDadosTabela(id);
+end;
+
+var
+  Usuario: TUsuarios;
+begin
+  Usuario := TUsuarios.Create(TDatabase.Connection);
+  Usuario.SalvaNoBanco(1);
+end;
+
+´´´
