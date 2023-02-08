@@ -44,6 +44,34 @@ end.
 
 ```
 
+## Sample Class Constants
+
+```delphi
+unit UnitConstants;
+
+interface
+
+uses System.SysUtils;
+
+type
+  TConstants = class
+    class function BancoDados: string;
+  end;
+
+implementation
+
+{ TConstants }
+
+uses System.StrUtils;
+
+class function TConstants.BancoDados: string;
+begin
+  Result := GetEnvironmentVariable('DB_HOST');
+end;
+
+end.
+´´´
+
 
 ## Establishing the database connection
 
@@ -86,6 +114,7 @@ end.
 ## Fetching data and saving to the database
 
 ```delphi
+//Fetching user for id
 var
   Usuario: TUsuarios;
 begin
@@ -93,11 +122,30 @@ begin
   Usuario.BuscaDadosTabela(id);
 end;
 
+//save user 
 var
   Usuario: TUsuarios;
 begin
   Usuario := TUsuarios.Create(TDatabase.Connection);
-  Usuario.SalvaNoBanco(1);
+  Usuario.SalvaNoBanco(1);//trying one time
+end;
+
+//delete user
+var
+  Usuario: TUsuarios;
+begin
+  Usuario := TUsuarios.Create(TDatabase.Connection);
+  Usuario.Apagar(id);
+end;
+
+//change user
+var
+  Usuario: TUsuarios;
+begin
+  Usuario := TUsuarios.Create(TDatabase.Connection);
+  Usuario.BuscaDadosTabela(id);
+  Usuario.Login := 'New Login';
+  Usuario.SalvaNoBanco(3);//trying three times
 end;
 
 ´´´
