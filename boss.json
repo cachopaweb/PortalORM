@@ -1,0 +1,11 @@
+{
+	"name": "PortalORM",
+	"description": "",
+	"version": "1.0.0",
+	"homepage": "",
+	"mainsrc": "./src",
+	"projects": [],
+	"dependencies": {
+		"https://github.com/cachopaweb/factory-connections": "^1.0.1"
+	}
+}

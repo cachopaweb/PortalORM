@@ -1,0 +1,14 @@
+{
+	"hash": "d41d8cd98f00b204e9800998ecf8427e",
+	"updated": "2023-02-08T11:18:10.1332897-04:00",
+	"installedModules": {
+		"https://github.com/cachopaweb/factory-connections": {
+			"name": "factory-connections",
+			"version": "1.0.1",
+			"hash": "afe93df6a69037b7acfa3aef6464146c",
+			"artifacts": {},
+			"failed": false,
+			"changed": false
+		}
+	}
+}
