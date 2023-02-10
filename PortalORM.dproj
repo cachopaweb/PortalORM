@@ -52,7 +52,7 @@
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
         <DCC_CBuilderOutput>All</DCC_CBuilderOutput>
         <SanitizedProjectName>PortalORM</SanitizedProjectName>
-        <DCC_UnitSearchPath>modules\.dcp;modules\.dcu;modules;modules\clientrest\src;modules\factory-connections\src\FireDAC;modules\factory-connections\src\IBExpress;modules\factory-connections\src;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>$(DCC_UnitSearchPath);modules\.dcp;modules\.dcu;modules;modules\clientrest\src;modules\factory-connections\src\FireDAC;modules\factory-connections\src\IBExpress;modules\factory-connections\src</DCC_UnitSearchPath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Android)'!=''">
         <DCC_CBuilderOutput>None</DCC_CBuilderOutput>
@@ -100,6 +100,12 @@
         <DCCReference Include="IndyIPClient.dcp"/>
         <DCCReference Include="ibxpress.dcp"/>
         <DCCReference Include="vcl.dcp"/>
+        <DCCReference Include="vclx.dcp"/>
+        <DCCReference Include="vclimg.dcp"/>
+        <DCCReference Include="Jcl.dcp"/>
+        <DCCReference Include="JvCore.dcp"/>
+        <DCCReference Include="JvStdCtrls.dcp"/>
+        <DCCReference Include="JvCustom.dcp"/>
         <DCCReference Include="src\Model\UnitPortalORM.Model.pas"/>
         <DCCReference Include="src\Modulos\InsereTabela\UnitInsereTabela.Model.pas"/>
         <DCCReference Include="src\Modulos\PatternCommand\UnitCommand.Interfaces.pas"/>

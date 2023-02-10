@@ -41,7 +41,13 @@ requires
   IndyCore,
   IndyIPClient,
   ibxpress,
-  vcl;
+  vcl,
+  vclx,
+  vclimg,
+  Jcl,
+  JvCore,
+  JvStdCtrls,
+  JvCustom;
 
 contains
   UnitPortalORM.Model in 'src\Model\UnitPortalORM.Model.pas',

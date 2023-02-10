@@ -6,7 +6,7 @@
 	"mainsrc": "./src",
 	"projects": [],
 	"dependencies": {
-		"https://github.com/cachopaweb/clientrest": "^1.0.1",
+		"https://github.com/cachopaweb/clientrest": "^1.0.3",
 		"https://github.com/cachopaweb/factory-connections": "^1.0.1"
 	}
 }
