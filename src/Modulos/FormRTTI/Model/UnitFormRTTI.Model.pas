@@ -17,10 +17,10 @@ uses
   Vcl.Graphics,
   JvValidateEdit,
   UnitFormRTTI.Interfaces,
-  UnitBancoDeDados.Model,
+  UnitPortalORM.Model,
   UnitRTTI.Helper,
   JvBaseEdits,
-  UnitClienteREST.Model.Interfaces, Vcl.Mask, Vcl.Dialogs, Winapi.Windows;
+  UnitClientREST.Model.Interfaces, Vcl.Mask, Vcl.Dialogs, Winapi.Windows;
 
 type
   TFormRTTI = class(TInterfacedObject, iFormRTTI)
