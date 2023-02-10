@@ -51,6 +51,7 @@ type
     function BindForm(Form: TForm): iFormRTTI;
     function SetEventoTipoOperacao(Value: TEventoTipoOperacao): iFormRTTI;
     function SetTabela(Tabela: TTabela): iFormRTTI;
+    function TipoOperacao: TTipoOperacao;
   end;
 
 implementation
@@ -458,6 +459,11 @@ function TFormRTTI.SetTabela(Tabela: TTabela): iFormRTTI;
 begin
   Result := Self;
   FTabela := Tabela;
+end;
+
+function TFormRTTI.TipoOperacao: TTipoOperacao;
+begin
+  Result := FTipoOperacao;
 end;
 
 procedure TFormRTTI.ValorParaComponent(Component: TComponent; Valor: Variant);

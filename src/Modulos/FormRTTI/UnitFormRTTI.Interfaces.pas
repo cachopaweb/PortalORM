@@ -34,6 +34,7 @@ type
     function BindForm(FForm: TForm): iFormRTTI;
     function SetEventoTipoOperacao(Value: TEventoTipoOperacao): iFormRTTI;
     function SetTabela(Tabela: TTabela): iFormRTTI;
+    function TipoOperacao: TTipoOperacao;
   end;
 
 implementation
