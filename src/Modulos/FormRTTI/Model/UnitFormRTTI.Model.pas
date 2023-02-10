@@ -132,10 +132,10 @@ begin
         Response := FTabela.Post
       else
         Response := FTabela.Put;
-      if not Response.StatusCode in [200, 201] then
-        raise Exception.Create('Erro ao enviar dados para o servidor!'+sLineBreak
-                          +'Response: '+Response.Content+sLineBreak
-                          +'Error:'+Response.Error+sLineBreak
+      if not (Response.StatusCode in [200, 201]) then
+        raise Exception.Create('Erro ao enviar dados para o servidor!'+sLineBreak+sLineBreak
+                          +'Response: '+Response.Content+sLineBreak+sLineBreak
+                          +'Error:'+Response.Error+sLineBreak+sLineBreak
                           +'StatusCode:'+Response.StatusCode.ToString);
     end else
       FTabela.SalvaNoBanco();
