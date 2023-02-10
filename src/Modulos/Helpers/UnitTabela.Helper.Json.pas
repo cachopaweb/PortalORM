@@ -87,7 +87,11 @@ begin
     end;
   end
   else
-    raise Exception.Create(FutureResponse.Value.Error);
+  begin
+    raise Exception.Create('Response: '+FutureResponse.Value.Content+sLineBreak
+                          +'Error:'+FutureResponse.Value.Error+sLineBreak
+                          +'StatusCode:'+FutureResponse.Value.StatusCode.ToString);
+  end;
 end;
 
 function THelperTTabelaREST.Clone<T>(Tabela: T): T;

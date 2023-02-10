@@ -133,9 +133,10 @@ begin
       else
         Response := FTabela.Put;
       if not Response.StatusCode in [200, 201] then
-        raise Exception.Create('Erro ao confirmar dados no servidor!'+sLineBreak
-                              +Response.Content+sLineBreak
-                              +'Erro:'+Response.Error);
+        raise Exception.Create('Erro ao enviar dados para o servidor!'+sLineBreak
+                          +'Response: '+Response.Content+sLineBreak
+                          +'Error:'+Response.Error+sLineBreak
+                          +'StatusCode:'+Response.StatusCode.ToString);
     end else
       FTabela.SalvaNoBanco();
     Application.MessageBox('Dados confirmados com sucesso!', 'Sucesso', MB_OK+MB_ICONINFORMATION);
