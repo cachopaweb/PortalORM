@@ -10,7 +10,7 @@ uses
   UnitClientREST.Model.Interfaces,
   System.SysUtils,
   IBX.IBDatabase,
-  IBX.IBQuery, System.Generics.Collections;
+  IBX.IBQuery, System.Generics.Collections, System.Classes;
 
 type
   THelperTTabelaREST = class helper for TTabela
@@ -26,8 +26,9 @@ type
     function Get<T: TTabela, constructor>(id: integer): T;overload;
     function Post: TClientResult;
     function Put: TClientResult;
-    function Delete(id: integer): TClientResult;
-  end;
+		function Delete(id: integer): TClientResult;
+		function GetDataComboBox<T: TTabela, constructor>(DisplayField: string; SearchField: string = ''): TStringList;
+	end;
 
 implementation
 
@@ -43,7 +44,7 @@ var
   Atributo: TCustomAttribute;
 begin
   { Extract type information for TSomeType type }
-  Tipo := Contexto.GetType(Self.ClassType);
+	Tipo := Contexto.GetType(Self.ClassType);
   try
     // busca dados da tabela
     for Atributo in Tipo.GetAttributes do
@@ -68,8 +69,8 @@ var
   BaseURL: string;
   FutureResponse: IFuture<TClientResult>;
 begin
-  BaseURL  := BuscaBaseURL;
-  FutureResponse := TTask.Future<TClientResult>(
+	BaseURL  := BuscaBaseURL;
+	FutureResponse := TTask.Future<TClientResult>(
     function: TClientResult
     begin
       Result := TClientREST.New(BaseURL).Get()
@@ -92,6 +93,37 @@ begin
                           +'Error:'+FutureResponse.Value.Error+sLineBreak
                           +'StatusCode:'+FutureResponse.Value.StatusCode.ToString);
   end;
+end;
+
+function THelperTTabelaREST.GetDataComboBox<T>(DisplayField: string; SearchField: string = ''): TStringList;
+var
+  aJson: TJSONArray;
+  Response: TClientResult;
+	json: TJSONValue;
+	model: T;
+	BaseURL: string;
+begin
+	Result := TStringList.Create;
+  Result.Clear;
+  aJson := TJSONArray.Create;
+	try
+		BaseURL  := BuscaBaseURL;
+		if not SearchField.IsEmpty then		
+			Response := TClientREST.New(BaseURL+'/'+SearchField).Get()
+		else
+			Response := TClientREST.New(BaseURL).Get();
+		if Response.StatusCode = 200 then
+    begin
+      aJson := TJSONObject.ParseJSONValue(Response.Content) as TJSONArray;
+			for json in aJson do
+      begin
+				 model := T.Create;
+				 Result.AddObject(json.GetValue<string>(DisplayField), model.fromJson<T>(json.ToJSON));
+      end;
+    end;
+  finally
+    aJson.DisposeOf;
+	end;
 end;
 
 function THelperTTabelaREST.Clone<T>(Tabela: T): T;
