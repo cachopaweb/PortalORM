@@ -22,7 +22,7 @@ type
     function fromJson<T: TTabela, constructor>(Json: string): T;
     function TemBaseURL: Boolean;
     // metodos HTTP
-    function Get<T: TTabela, constructor>: T;overload;
+		function Get<T: TTabela, constructor>: TList<T>;overload;
     function Get<T: TTabela, constructor>(id: integer): T;overload;
     function Post: TClientResult;
     function Put: TClientResult;
@@ -60,15 +60,16 @@ begin
   end;
 end;
 
-function THelperTTabelaREST.Get<T>: T;
+function THelperTTabelaREST.Get<T>: TList<T>;
 var
   Response: TClientResult;
   ajson: TJSONArray;
   i: integer;
-  ojson: TJSONObject;
+  ojson: TJSONValue;
   BaseURL: string;
   FutureResponse: IFuture<TClientResult>;
 begin
+	Result := TList<T>.Create;
 	BaseURL  := BuscaBaseURL;
 	FutureResponse := TTask.Future<TClientResult>(
     function: TClientResult
@@ -77,15 +78,11 @@ begin
     end);
   if FutureResponse.Value.StatusCode = 200 then
   begin
-    try
-      ajson  := TJSONObject.ParseJSONValue(FutureResponse.Value.Content) as TJSONArray;
-      if ajson.Count > 0 then
-        Result := Self.fromJson<T>(ajson.Items[0].ToJson)
-    except
-      ojson  := TJSONObject.ParseJSONValue(FutureResponse.Value.Content) as TJSONObject;
-      if not ojson.ToJSON.IsEmpty then
-        Result := Self.fromJson<T>(ojson.ToJSON);
-    end;
+		ajson  := TJSONObject.ParseJSONValue(FutureResponse.Value.Content) as TJSONArray;
+		for ojson in ajson do
+		begin
+			Result.Add(Self.fromJson<T>(ojson.ToJson));
+		end;			
   end
   else
   begin
@@ -219,15 +216,9 @@ begin
     end);
   if FutureResponse.Value.StatusCode = 200 then
   begin
-    try
-      ajson  := TJSONObject.ParseJSONValue(FutureResponse.Value.Content) as TJSONArray;
-      if ajson.Count > 0 then
-        Result := Self.fromJson<T>(ajson.Items[0].ToJson)
-    except
-      ojson  := TJSONObject.ParseJSONValue(FutureResponse.Value.Content) as TJSONObject;
-      if not ojson.ToJSON.IsEmpty then
-        Result := Self.fromJson<T>(ojson.ToJSON);
-    end;
+		ojson  := TJSONObject.ParseJSONValue(FutureResponse.Value.Content) as TJSONObject;
+		if not ojson.ToJSON.IsEmpty then
+			Result := Self.fromJson<T>(ojson.ToJSON);
   end
   else
     raise Exception.Create(FutureResponse.Value.Error);
