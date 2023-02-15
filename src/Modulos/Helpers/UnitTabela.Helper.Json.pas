@@ -8,9 +8,9 @@ uses
   UnitPortalORM.Model,
   System.Rtti,
   UnitClientREST.Model.Interfaces,
-  System.SysUtils,
-  IBX.IBDatabase,
-  IBX.IBQuery, System.Generics.Collections, System.Classes;
+	System.SysUtils, 
+	System.Generics.Collections, 
+	System.Classes;
 
 type
   THelperTTabelaREST = class helper for TTabela
