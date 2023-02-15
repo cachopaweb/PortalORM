@@ -81,7 +81,7 @@ begin
 		ajson  := TJSONObject.ParseJSONValue(FutureResponse.Value.Content) as TJSONArray;
 		for ojson in ajson do
 		begin
-			Result.Add(Self.fromJson<T>(ojson.ToJson));
+			Result.Add(T.Create.fromJson<T>(ojson.ToJson));
 		end;			
   end
   else
@@ -196,7 +196,7 @@ var
   model: T;
 begin
   model := TJson.JsonToObject<T>(Json);
-  Result := T(Self.Clone<T>(model));
+	Result := T(Self.Clone<T>(model));
 end;
 
 function THelperTTabelaREST.Get<T>(id: integer): T;
