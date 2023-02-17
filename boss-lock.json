@@ -12,8 +12,8 @@
 		},
 		"https://github.com/cachopaweb/factory-connections": {
 			"name": "factory-connections",
-			"version": "1.0.2",
-			"hash": "58c7757d86ace66e4555479b3cd30799",
+			"version": "v1.0.3",
+			"hash": "dd2506e1ff0fd0b4e07f0347972f12f6",
 			"artifacts": {},
 			"failed": false,
 			"changed": false
