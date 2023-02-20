@@ -145,7 +145,9 @@ begin
     // busca dados da tabela
     for Propriedade in Tipo.GetProperties do
     begin
-      if ListaPropriedades.Contains(Propriedade) then
+			if ListaPropriedades.Contains(Propriedade) 
+			and (not Propriedade.Name.Contains('RefCount')) 
+			and (not Propriedade.Name.Contains('Disposed')) then
       begin
         index := ListaPropriedades.IndexOf(Propriedade);
         Propriedade.SetValue(Pointer(Self), ListaPropriedades.Items[index].GetValue(Pointer(Tabela)));
