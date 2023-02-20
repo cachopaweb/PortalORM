@@ -84,60 +84,58 @@ type
     [JSONMarshalledAttribute(false)]
     CampoBusca: string;
     [JSONMarshalledAttribute(false)]
-    FTabelaFilha: TObject;
-    function BuscaValorDataSet(Propriedade: TRttiProperty): TValue;
-  protected
-    { protected declarations }
-    [JSONMarshalledAttribute(false)]
-    Contexto: TRttiContext;
-    [JSONMarshalledAttribute(false)]
-    IBQR: TFDQuery;
-    [JSONMarshalledAttribute(false)]
-    [JSONMarshalledAttribute(false)]
-    Campos: TList<TCampo>;
-    [JSONMarshalledAttribute(false)]
-    Propriedades: TDictionary<TRttiProperty, TCampo>;
-    [JSONMarshalledAttribute(false)]
-    Relacionamentos: TDictionary<TRttiProperty, TRelacionamento>;
-    FBancoDeDados: iConnection;
-    FIndiceConexao: integer;
-    procedure VarreCampos;
-    function BuscaValorCampoReferencia(Propriedades: TDictionary<TRttiProperty, TCampo>; CampoReferencia: string): integer;
-  public
-    { public declarations }
-    procedure BuscaDadosTabela(ValorBusca: string; Tentativa: smallint = 0; ClausulaWhere: string = '');overload;
-    procedure BuscaDadosTabela(ValorBusca: integer; Tentativa: smallint = 0; ClausulaWhere: string = '');overload;
-    function BuscaListaFilhos(ValorBusca: integer; Tentativa: smallint): TList<TTabela>;
-    procedure SalvaNoBanco(Tentativa: smallint = 0);
-    procedure Apagar(Codigo: integer);
-    [JSONMarshalledAttribute(False)]
-    property TabelaFilha: TObject read FTabelaFilha write FTabelaFilha;
-    constructor Create(BancoDeDados: TFDConnection; TransacaoExterna: TFDTransaction = nil);overload;
-    constructor Create(BancoDeDados: iConnection);overload;
-    constructor Create;overload;
-    destructor Destroy; override;
-  published
-    { published declarations }
-  end;
+		function BuscaValorDataSet(Propriedade: TRttiProperty): TValue;
+	protected
+		{ protected declarations }
+		[JSONMarshalledAttribute(false)]
+		Contexto: TRttiContext;
+		[JSONMarshalledAttribute(false)]
+		IBQR: TFDQuery;
+		[JSONMarshalledAttribute(false)]
+		Campos: TList<TCampo>;
+		[JSONMarshalledAttribute(false)]
+		Propriedades: TDictionary<TRttiProperty, TCampo>;
+		[JSONMarshalledAttribute(false)]
+		Relacionamentos: TDictionary<TRttiProperty, TRelacionamento>;
+		[JSONMarshalledAttribute(False)]
+		FBancoDeDados: iConnection;
+		[JSONMarshalledAttribute(False)]
+		FIndiceConexao: integer;
+		procedure VarreCampos;
+		function BuscaValorCampoReferencia(Propriedades: TDictionary<TRttiProperty, TCampo>; CampoReferencia: string): integer;
+	public
+		{ public declarations }
+		procedure BuscaDadosTabela(ValorBusca: string; Tentativa: smallint = 0; ClausulaWhere: string = '');overload;
+		procedure BuscaDadosTabela(ValorBusca: integer; Tentativa: smallint = 0; ClausulaWhere: string = '');overload;
+		function BuscaListaFilhos(ValorBusca: integer; Tentativa: smallint): TList<TTabela>;
+		procedure SalvaNoBanco(Tentativa: smallint = 0);
+		procedure Apagar(Codigo: integer);
+		constructor Create(BancoDeDados: TFDConnection; TransacaoExterna: TFDTransaction = nil);overload;
+		constructor Create(BancoDeDados: iConnection);overload;
+		constructor Create;overload;
+		destructor Destroy; override;
+	published
+		{ published declarations }
+	end;
 
-  TBanco = class
-  private
-    { private declarations }
-    FListaTabelas: TStringList;
-    function BuscaListaTabelas: TStringList;
-    function BuscaListaCampos(Tabela: TTabela): TStringList;
-    procedure AnalisaTabela(Tabela: TTabela);
-    procedure AnalisaCampos(Tabela: TTabela);
-    procedure CriaTabela(Tabela: TTabela);
-  protected
-    { protected declarations }
-    IBQR: TFDQuery;
-  public
-    { public declarations }
-    Tabelas: TList<TTabela>;
-    procedure Analisa;
-    constructor Create(BancoDeDados: TFDConnection);
-    destructor Destroy; override;
+	TBanco = class
+	private
+		{ private declarations }
+		FListaTabelas: TStringList;
+		function BuscaListaTabelas: TStringList;
+		function BuscaListaCampos(Tabela: TTabela): TStringList;
+		procedure AnalisaTabela(Tabela: TTabela);
+		procedure AnalisaCampos(Tabela: TTabela);
+		procedure CriaTabela(Tabela: TTabela);
+	protected
+		{ protected declarations }
+		IBQR: TFDQuery;
+	public
+		{ public declarations }
+		Tabelas: TList<TTabela>;
+		procedure Analisa;
+		constructor Create(BancoDeDados: TFDConnection);
+		destructor Destroy; override;
   published
     { published declarations }
   end;
