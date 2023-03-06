@@ -346,7 +346,7 @@ begin
 							ValorCampoReferencia := BuscaValorCampoReferencia(Propriedades, Relacionamento.CampoReferencia);
 							TabelaFilha.BuscaDadosTabela(ValorCampoReferencia);
 							Value := TabelaFilha;
-							Propriedade.SetValue(Pointer(TabelaFilha), Value);
+							Propriedade.SetValue(Self, Value);
 						end;
 					UmPraMuitos:
 						begin
