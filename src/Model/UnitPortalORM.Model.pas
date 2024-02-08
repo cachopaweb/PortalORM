@@ -1,4 +1,4 @@
-﻿unit UnitPortalORM.Model;
+unit UnitPortalORM.Model;
 
 interface
 
@@ -360,7 +360,9 @@ begin
 	except
 		on E: Exception do
 		begin
-			if ((Pos('FIELD', UpperCase(E.Message)) > 0) and (Pos('NOT FOUND', UpperCase(E.Message)) > 0) or (Pos('TABLE UNKNOWN', UpperCase(E.Message)) > 0)) and (Tentativa < 5) then
+			if ((Pos('FIELD', UpperCase(E.Message)) > 0) and (Pos('NOT FOUND', UpperCase(E.Message)) > 0) 
+			or (Pos('TABLE UNKNOWN', UpperCase(E.Message)) > 0)) or (Pos('COLUMN UNKNOWN', UpperCase(E.Message)) > 0)
+			and (Tentativa < 5) then
 			begin
 				// Caso alguma coluna não exista na tabela, ela será criada
 				Banco := TBanco.Create(TFDConnection(IBQR.Connection));
@@ -433,7 +435,9 @@ begin
 		except
 			on E: Exception do
 			begin
-				if ((Pos('FIELD', UpperCase(E.Message)) > 0) and (Pos('NOT FOUND', UpperCase(E.Message)) > 0) or (Pos('TABLE UNKNOWN', UpperCase(E.Message)) > 0)) and (Tentativa < 5) then
+				if ((Pos('FIELD', UpperCase(E.Message)) > 0) and (Pos('NOT FOUND', UpperCase(E.Message)) > 0)
+        or (Pos('TABLE UNKNOWN', UpperCase(E.Message)) > 0)) or (Pos('COLUMN UNKNOWN', UpperCase(E.Message)) > 0)
+        and (Tentativa < 5) then
 				begin
 					// Caso alguma coluna não exista na tabela, ela será criada
 					Banco := TBanco.Create(TFDConnection(IBQRFilhos.Connection));
