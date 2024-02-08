@@ -14,7 +14,8 @@ $ boss install https://github.com/CachopaWeb/PortalORM
 interface
 
 uses
-  UnitPortalORM.Model;
+  UnitPortalORM.Model,
+  UnitFuncionarios.Model;//for the relationship
 
 type
   [TRecursoServidor('/usuarios')]
@@ -25,6 +26,7 @@ type
     FLogin: string;
     Ffun_codigo: integer;
     FSenha: string;
+    FFuncionarios: TFuncionarios;
     { private declarations }
   public
     { public declarations }
@@ -36,6 +38,8 @@ type
     property fun_codigo: integer read Ffun_codigo write Ffun_codigo;
     [TCampo('USU_SENHA', 'VARCHAR(30)')]
     property Senha: string read FSenha write FSenha;
+    [TRelacionamento('FUNCIONARIOS', 'FUN_CODIGO', 'USU_FUN', TFuncionarios, TTipoRelacionamento.UmPraUm)]
+    property Funcionarios: TFuncionarios read FFuncionarios write FFuncionarios;
   end;
 
 implementation
