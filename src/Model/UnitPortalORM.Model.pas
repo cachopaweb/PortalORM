@@ -85,6 +85,7 @@ type
 		CampoBusca: string;
 		[JSONMarshalledAttribute(false)]
 		function BuscaValorDataSet(Propriedade: TRttiProperty): TValue;
+    procedure CriaTabela;
 	protected
 		{ protected declarations }
 		[JSONMarshalledAttribute(false)]
@@ -629,6 +630,18 @@ begin
 		Tipo.DisposeOf;
 	end;
 end;
+
+procedure TTabela.CriaTabela;
+var
+	Banco: TBanco;
+begin
+	Banco := TBanco.Create(TFDConnection(IBQR.Connection));
+	VarreCampos;
+	Banco.Tabelas.Add(Self);
+	Banco.Analisa;
+	Banco.DisposeOf;
+end;
+
 
 { TRelacionamento }
 
