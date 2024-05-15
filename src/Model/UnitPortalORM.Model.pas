@@ -1,4 +1,4 @@
-unit UnitPortalORM.Model;
+﻿unit UnitPortalORM.Model;
 
 interface
 
@@ -84,8 +84,7 @@ type
 		[JSONMarshalledAttribute(false)]
 		CampoBusca: string;
 		[JSONMarshalledAttribute(false)]
-		function BuscaValorDataSet(Propriedade: TRttiProperty): TValue;
-    procedure CriaTabela;
+		function BuscaValorDataSet(Propriedade: TRttiProperty): TValue;    
 	protected
 		{ protected declarations }
 		[JSONMarshalledAttribute(false)]
@@ -111,6 +110,7 @@ type
 		function BuscaListaFilhos(ValorBusca: integer; Tentativa: smallint; Relacionamento: TRelacionamento): TArray<TTabela>;
 		procedure SalvaNoBanco(Tentativa: smallint = 0);
 		procedure Apagar(Codigo: integer);
+    procedure CriaTabela;
 		constructor Create(BancoDeDados: TFDConnection; TransacaoExterna: TFDTransaction = nil); overload;
 		constructor Create(BancoDeDados: iConnection); overload;
 		constructor Create; overload;
