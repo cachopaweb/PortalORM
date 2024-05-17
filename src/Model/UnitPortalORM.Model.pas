@@ -80,13 +80,13 @@ type
 	private
 		{ private declarations }
 		[JSONMarshalledAttribute(false)]
-		Nome: string;
-		[JSONMarshalledAttribute(false)]
-		CampoBusca: string;
-		[JSONMarshalledAttribute(false)]
 		function BuscaValorDataSet(Propriedade: TRttiProperty): TValue;    
 	protected
 		{ protected declarations }
+		[JSONMarshalledAttribute(false)]
+		Nome: string;
+		[JSONMarshalledAttribute(false)]
+		CampoBusca: string;
 		[JSONMarshalledAttribute(false)]
 		Contexto: TRttiContext;
 		[JSONMarshalledAttribute(false)]
