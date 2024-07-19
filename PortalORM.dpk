@@ -57,7 +57,6 @@ contains
   UnitConfiguracaoServidor.Singleton in 'src\Modulos\Helpers\UnitConfiguracaoServidor.Singleton.pas',
   UnitFormRTTI.Interfaces in 'src\Modulos\FormRTTI\UnitFormRTTI.Interfaces.pas',
   UnitRTTI.Helper in 'src\Modulos\FormRTTI\UnitRTTI.Helper.pas',
-  UnitFormRTTI.Model in 'src\Modulos\FormRTTI\Model\UnitFormRTTI.Model.pas',
-  UnitTabela.Helper.Listas in 'src\Modulos\Helpers\UnitTabela.Helper.Listas.pas';
+  UnitFormRTTI.Model in 'src\Modulos\FormRTTI\Model\UnitFormRTTI.Model.pas';
 
 end.

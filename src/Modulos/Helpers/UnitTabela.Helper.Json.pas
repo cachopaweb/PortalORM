@@ -10,7 +10,7 @@ uses
   UnitClientREST.Model.Interfaces,
 	System.SysUtils, 
 	System.Generics.Collections, 
-	System.Classes;
+	System.Classes, FireDAC.Comp.Client;
 
 type
   THelperTTabelaREST = class helper for TTabela
@@ -28,6 +28,10 @@ type
     function Put: TClientResult;
 		function Delete(id: integer): TClientResult;
 		function GetDataComboBox<T: TTabela, constructor>(DisplayField: string; SearchField: string = ''): TStringList;
+    function PreencheLista<T: TTabela, constructor>(CampoReferencia: string; ValorBusca: integer): TList<T>; overload;
+    function PreencheLista<T: TTabela, constructor>(CampoReferencia: string; ValorBusca: string): TList<T>; overload;
+    function PreencheLista<T: TTabela, constructor>(_CamposBusca, ValoresBusca: array of string; OrderBy: string = ''): TList<T>; overload;
+    function PreencheListaWhere<T: TTabela, constructor>(CondicaoWhere: string; OrderBy: string = ''): TList<T>;
 	end;
 
 implementation
@@ -179,6 +183,96 @@ begin
   ojson := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes(Self.ToJson), 0) as TJSONObject;
   // envia para o servidor
   Result := TClientREST.New(BaseURL).AddHeader('Content-Type', 'application/json').AddBody(ojson).Post();
+end;
+
+function THelperTTabelaREST.PreencheLista<T>(CampoReferencia: string; ValorBusca: integer): TList<T>;
+begin
+  Result := PreencheLista<T>(CampoReferencia, ValorBusca.ToString);
+end;
+
+function THelperTTabelaREST.PreencheLista<T>(CampoReferencia, ValorBusca: string): TList<T>;
+var
+	Query: TFDQuery;
+begin
+	Query             := TFDQuery.Create(nil);
+	Query.Connection  := IBQR.Connection;
+	Result := TList<T>.Create;
+	try
+		Query.Close;
+		Query.SQL.Clear;
+		Query.SQL.Add('SELECT * FROM ' + Self.Nome + ' WHERE ' + CampoReferencia + ' = ' + '''' + ValorBusca + '''');
+		Query.Open;
+		Query.First;
+		while not Query.Eof do
+		begin
+			Result.Add(TTabela(T.Create).Create(TFDConnection(Self.IBQR.Connection)));
+			TTabela(Result[Pred(Result.Count)]).BuscaDadosTabela(Query.FieldByName(Self.CampoBusca).AsInteger);
+			Query.Next;
+		end;
+	finally
+		Query.DisposeOf;
+	end;
+end;
+
+function THelperTTabelaREST.PreencheLista<T>(_CamposBusca, ValoresBusca: array of string; OrderBy: string): TList<T>;
+var 
+	Query: TFDQuery;
+	CamposAux: string;
+  i: Integer;
+begin
+	CamposAux := '';
+  for i := Low(_CamposBusca) to High(_CamposBusca) do
+  begin
+    CamposAux := CamposAux + _CamposBusca[i]+' = '''+ValoresBusca[i]+''' AND ';
+  end;
+  CamposAux := CamposAux.Substring(0, CamposAux.Length - 5);
+  //
+  Query             := TFDQuery.Create(nil);
+	Query.Connection  := IBQR.Connection;
+	Result := TList<T>.Create;
+  try
+    Query.Close;
+    Query.SQL.Clear;
+    Query.SQL.Add('SELECT '+Self.CampoBusca+' FROM ' + Self.Nome + ' WHERE ' + CamposAux);
+    if OrderBy <> '' then
+      Query.SQL.Add(' ORDER BY '+OrderBy);
+    Query.Open;
+    Query.First;
+    while not Query.Eof do
+    begin
+      Result.Add(TTabela(T.Create).Create(TFDConnection(Self.IBQR.Connection)));
+      TTabela(Result[Pred(Result.Count)]).BuscaDadosTabela(Query.FieldByName(Self.CampoBusca).AsInteger);
+      Query.Next;
+    end;
+  finally
+    Query.DisposeOf;
+  end;
+end;
+
+function THelperTTabelaREST.PreencheListaWhere<T>(CondicaoWhere, OrderBy: string): TList<T>;
+var 
+	Query: TFDQuery;	
+begin
+  Query             := TFDQuery.Create(nil);
+	Query.Connection    := IBQR.Connection;
+	Result := TList<T>.Create;
+  try
+    Query.Close;
+    Query.SQL.Clear;
+    Query.SQL.Add('SELECT '+Self.CampoBusca+' FROM ' + Self.Nome + ' WHERE ' + CondicaoWhere);
+    if OrderBy <> '' then
+      Query.SQL.Add(' ORDER BY '+OrderBy);
+    Query.Open;
+    Query.First;
+    while not Query.Eof do
+    begin
+      Result.Add(TTabela(T.Create).Create(TFDConnection(Self.IBQR.Connection)));
+      TTabela(Result[Pred(Result.Count)]).BuscaDadosTabela(Query.FieldByName(Self.CampoBusca).AsInteger);
+      Query.Next;
+    end;
+  finally
+    Query.DisposeOf;
+  end;
 end;
 
 function THelperTTabelaREST.Put: TClientResult;
