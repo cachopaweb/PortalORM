@@ -19,6 +19,7 @@ type
     function Clone<T: TTabela, constructor>(Tabela: T): T;
   public
     function ToJson: string;
+    function ToJsonObject: TJSONObject;
     function fromJson<T: TTabela, constructor>(Json: string): T;
     function TemBaseURL: Boolean;
     // metodos HTTP
@@ -328,6 +329,11 @@ end;
 function THelperTTabelaREST.ToJson: string;
 begin
   Result := TJson.ObjectToJsonString(Self);
+end;
+
+function THelperTTabelaREST.ToJsonObject: TJSONObject;
+begin
+	Result := TJson.ObjectToJsonObject(Self);
 end;
 
 end.
