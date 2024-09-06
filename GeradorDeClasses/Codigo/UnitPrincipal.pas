@@ -23,7 +23,9 @@ uses
 	FireDAC.Stan.Async, FireDAC.DApt, FireDAC.UI.Intf, FireDAC.Stan.Def,
 	FireDAC.Stan.Pool, FireDAC.Phys, FireDAC.Phys.FB, FireDAC.Phys.FBDef,
 	FireDAC.VCLUI.Wait, FireDAC.Phys.IBBase, FireDAC.Comp.Client,
-	FireDAC.Comp.DataSet, System.Actions, Vcl.ActnList, Vcl.ComCtrls, Vcl.ToolWin;
+	FireDAC.Comp.DataSet, System.Actions, Vcl.ActnList, Vcl.ComCtrls, 
+  Vcl.ToolWin,
+  FileCtrl;
 
 type
 	TFrmPrincipal = class(TForm)
@@ -82,6 +84,18 @@ type
     EdtPesquisaTabela: TSearchBox;
     Panel4: TPanel;
     TimerPesquisa: TTimer;
+    FDMetaInfoChavePrimaria: TFDMetaInfoQuery;
+    FDMetaInfoChavePrimariaRECNO: TIntegerField;
+    FDMetaInfoChavePrimariaCATALOG_NAME: TWideStringField;
+    FDMetaInfoChavePrimariaSCHEMA_NAME: TWideStringField;
+    FDMetaInfoChavePrimariaTABLE_NAME: TWideStringField;
+    FDMetaInfoChavePrimariaINDEX_NAME: TWideStringField;
+    FDMetaInfoChavePrimariaCOLUMN_NAME: TWideStringField;
+    FDMetaInfoChavePrimariaCOLUMN_POSITION: TIntegerField;
+    FDMetaInfoChavePrimariaSORT_ORDER: TWideStringField;
+    FDMetaInfoChavePrimariaFILTER: TWideStringField;
+    btnSalvar: TSpeedButton;
+    FileSaveDialog1: TFileSaveDialog;
 		procedure DBGrid1CellClick(Column: TColumn);
 		procedure spbSelecionarClick(Sender: TObject);
 		procedure DSTabelasDataChange(Sender: TObject; Field: TField);
@@ -95,11 +109,14 @@ type
     procedure EdtBancoDeDadosInvokeSearch(Sender: TObject);
     procedure TimerPesquisaTimer(Sender: TObject);
     procedure EdtPesquisaTabelaChange(Sender: TObject);
+    procedure btnSalvarClick(Sender: TObject);
 	private
 		{ Private declarations }
 		procedure DesmembraCampoTipo(Texto: string; var Campo, Tipo: string);
 		procedure AjustaNomeTipoDelphi(CampoBD, TipoBD: string; var CampoDelphi, TipoDelphi: string);
 		procedure ConectaBancoDeDados(BD: string);
+    function ConvertToCamelCase(const input: string): string;
+    function ConvertToPascalCase(const input: string): string;
 	public
 		{ Public declarations }
 	end;
@@ -123,10 +140,7 @@ end;
 
 procedure TFrmPrincipal.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-	if Application.MessageBox('Deseja realmente sair da aplicação?', 'Confirmar', MB_YESNO) = IDYes then
-	begin
-		Application.Terminate;
-	end;
+	Application.Terminate;
 end;
 
 procedure TFrmPrincipal.FormDestroy(Sender: TObject);
@@ -244,34 +258,111 @@ begin
 		Exit;
 	end;
 	MemoResultado.Lines.Clear;
+  MemoResultado.Lines.Add(Format('unit Unit%s.Model;', [ConvertToCamelCase(String(EdtTabela.Text))]));
+  MemoResultado.Lines.Add('');
+  MemoResultado.Lines.Add('interface');
+  MemoResultado.Lines.Add('');
+  MemoResultado.Lines.Add('uses');
+  MemoResultado.Lines.Add('  {$IFDEF PORTALORM}');
+  MemoResultado.Lines.Add('  UnitPortalORM.Model;');
+  MemoResultado.Lines.Add('  {$ELSE}');
+  MemoResultado.Lines.Add('  UnitBancoDeDados.Model;');
+  MemoResultado.Lines.Add('  {$ENDIF}');
+  MemoResultado.Lines.Add('');
+  MemoResultado.Lines.Add('type');  
+  MemoResultado.Lines.Add('  [TRecursoServidor(''/'+ConvertToPascalCase(String(EdtTabela.Text))+''')]');
 	MemoResultado.Lines.Add('  [TNomeTabela(''' + EdtTabela.Text + ''', ''' + EdtCampoBusca.Text + ''')]');
-	MemoResultado.Lines.Add('  TClasse = class(TTabela)');
+	MemoResultado.Lines.Add(Format('  T%s = class(TTabela)', [ConvertToCamelCase(String(EdtTabela.Text))]));
 	MemoResultado.Lines.Add('  private');
 	MemoResultado.Lines.Add('    { private declarations }');
 	MemoResultado.Lines.Add('  public');
-	MemoResultado.Lines.Add('    { public declarations }');
+	MemoResultado.Lines.Add('    { public declarations }');    
 	FDMetaInfoCampos.First;
 	while not FDMetaInfoCampos.Eof do
 	begin
 		Campo := FDMetaInfoCamposCOLUMN_NAME.AsString;
 		Tipo  := FDMetaInfoCamposCOLUMN_TYPENAME.AsString;
+    //Chave primaria
+    FDMetaInfoChavePrimaria.Active := False;
+    FDMetaInfoChavePrimaria.MetaInfoKind   := mkPrimaryKeyFields;  
+    FDMetaInfoChavePrimaria.BaseObjectName := FDMetaInfoTabelas.FieldByName('TABLE_NAME').AsString;
+    FDMetaInfoChavePrimaria.Active         := True;
+    /////
 		if Tipo.Contains('CHAR') or Tipo.Contains('VARCHAR') then
 			MemoResultado.Lines.Add(Format('    [TCampo(''%s'', ''%s'')]', [Campo, Tipo + '(' + FDMetaInfoCamposCOLUMN_LENGTH.AsString + ')']))
 		else if Tipo.Contains('DECIMAL') or Tipo.Contains('NUMERIC') then
 			MemoResultado.Lines.Add(Format('    [TCampo(''%s'', ''%s'')]', [Campo, 'NUMERIC(' + FDMetaInfoCamposCOLUMN_PRECISION.AsString + ',' + FDMetaInfoCamposCOLUMN_SCALE.AsString + ')']))
-		else
+		else if FDMetaInfoChavePrimariaCOLUMN_NAME.AsString = FDMetaInfoCamposCOLUMN_NAME.AsString then    	        
+    	MemoResultado.Lines.Add(Format('    [TCampo(''%s'', ''%s'')]', [Campo, 'INTEGER NOT NULL PRIMARY KEY']))
+    else
 			MemoResultado.Lines.Add(Format('    [TCampo(''%s'', ''%s'')]', [Campo, Tipo]));
 		AjustaNomeTipoDelphi(Campo, Tipo, NomeCampoDelphi, TipoCampoDelphi);
 		MemoResultado.Lines.Add('    property ' + NomeCampoDelphi + ': ' + TipoCampoDelphi + ' read F' + NomeCampoDelphi + ' write F' + NomeCampoDelphi + ';');
 		FDMetaInfoCampos.Next;
 	end;
 	MemoResultado.Lines.Add('  end;');
+  MemoResultado.Lines.Add('');
+  MemoResultado.Lines.Add('implementation');
+  MemoResultado.Lines.Add('');
+  MemoResultado.Lines.Add('end.');
 	FDMetaInfoCampos.First;
+end;
+
+function TFrmPrincipal.ConvertToPascalCase(const input: string): string;
+var
+  i: Integer;
+  words: TStringList;
+begin
+  // Divide a entrada em palavras usando o caractere de sublinhado como delimitador
+  words := TStringList.Create;
+  try
+    words.Delimiter := '_';
+    words.DelimitedText := input;
+
+    // Transforma a primeira letra de cada palavra em maiúscula
+    for i := 0 to words.Count - 1 do
+    begin
+      words[i] := AnsiUpperCase(words[i][1]) + AnsiLowerCase(Copy(words[i], 2, MaxInt));
+    end;
+
+    // Concatena as palavras para formar o resultado final    
+    Result := words.Text.Replace(sLineBreak, '');
+    Result := Result.Substring(0, 1).ToLower+(Result.Substring(1, Result.Length))
+  finally
+    words.Free;
+  end;
+end;
+
+function TFrmPrincipal.ConvertToCamelCase(const input: string): string;
+var
+  i: Integer;
+  words: TStringList;
+begin
+  // Divide a entrada em palavras usando o caractere de sublinhado como delimitador
+  words := TStringList.Create;
+  try
+    words.Delimiter := '_';
+    words.DelimitedText := input;
+
+    // Transforma a primeira letra de cada palavra em maiúscula
+    for i := 0 to words.Count - 1 do
+    begin
+      words[i] := AnsiUpperCase(words[i][1]) + AnsiLowerCase(Copy(words[i], 2, MaxInt));
+    end;
+
+    // Concatena as palavras para formar o resultado final    
+    Result := words.Text.Replace(sLineBreak, '');
+  finally
+    words.Free;
+  end;
 end;
 
 procedure TFrmPrincipal.actSairExecute(Sender: TObject);
 begin
-	Self.Close;
+	if Application.MessageBox('Deseja realmente sair da aplicação?', 'Confirmar', MB_YESNO) = IDYes then
+	begin
+		Self.Close;
+  end;
 end;
 
 procedure TFrmPrincipal.AjustaNomeTipoDelphi(CampoBD, TipoBD: string; var CampoDelphi, TipoDelphi: string);
@@ -294,9 +385,28 @@ begin
 	if TipoBD.Contains('TIMESTAMP') then
 		TipoDelphi := 'TDateTime';
 	if TipoBD.Contains('SMALLINT') then
-		TipoDelphi := 'smallint';
+		TipoDelphi := 'integer';
 	if TipoBD.Contains('CHAR') then
 		TipoDelphi := 'string';
+end;
+
+procedure TFrmPrincipal.btnSalvarClick(Sender: TObject);
+var
+  DiretorioRaiz: string;
+  NomeArquivo: string;
+  Diretorio: string;
+  DirInicial: string;
+begin
+	DirInicial := String(EdtBancoDeDados.Text).Split(['Dados'])[0];
+  if SelectDirectory(DirInicial, [sdAllowCreate, sdPerformCreate, sdPrompt], 0) then
+  begin   
+  	DiretorioRaiz := ExtractFileDir(DirInicial.Substring(0, DirInicial.Length)+'\');
+    Diretorio := DiretorioRaiz+'\'+ConvertToCamelCase(String(EdtTabela.Text));
+    if not DirectoryExists(Diretorio) then
+    	ForceDirectories(Diretorio);
+    NomeArquivo := Diretorio+Format('\Unit%s.Model.pas', [ConvertToCamelCase(String(EdtTabela.Text))]);
+    MemoResultado.Lines.SaveToFile(ChangeFileExt(NomeArquivo, '.pas'));
+  end;
 end;
 
 procedure TFrmPrincipal.ConectaBancoDeDados(BD: string);
