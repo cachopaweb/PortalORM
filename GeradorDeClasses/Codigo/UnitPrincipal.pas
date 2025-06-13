@@ -96,6 +96,7 @@ type
     FDMetaInfoChavePrimariaFILTER: TWideStringField;
     btnSalvar: TSpeedButton;
     FileSaveDialog1: TFileSaveDialog;
+    BtnConectar: TBitBtn;
 		procedure DBGrid1CellClick(Column: TColumn);
 		procedure spbSelecionarClick(Sender: TObject);
 		procedure DSTabelasDataChange(Sender: TObject; Field: TField);
@@ -110,6 +111,7 @@ type
     procedure TimerPesquisaTimer(Sender: TObject);
     procedure EdtPesquisaTabelaChange(Sender: TObject);
     procedure btnSalvarClick(Sender: TObject);
+    procedure BtnConectarClick(Sender: TObject);
 	private
 		{ Private declarations }
 		procedure DesmembraCampoTipo(Texto: string; var Campo, Tipo: string);
@@ -230,7 +232,8 @@ procedure TFrmPrincipal.EdtBancoDeDadosInvokeSearch(Sender: TObject);
 begin
 	if FileOpenDialog1.Execute then
 	begin
-		ConectaBancoDeDados(FileOpenDialog1.FileName);
+		EdtBancoDeDados.Text := FileOpenDialog1.FileName;
+		ConectaBancoDeDados(EdtBancoDeDados.Text);
 	end;
 end;
 
@@ -275,7 +278,16 @@ begin
 	MemoResultado.Lines.Add(Format('  T%s = class(TTabela)', [ConvertToCamelCase(String(EdtTabela.Text))]));
 	MemoResultado.Lines.Add('  private');
 	MemoResultado.Lines.Add('    { private declarations }');
-	MemoResultado.Lines.Add('  public');
+	FDMetaInfoCampos.First;
+	while not FDMetaInfoCampos.Eof do
+	begin
+		Campo := FDMetaInfoCamposCOLUMN_NAME.AsString;
+		Tipo  := FDMetaInfoCamposCOLUMN_TYPENAME.AsString;
+    AjustaNomeTipoDelphi(Campo, Tipo, NomeCampoDelphi, TipoCampoDelphi);
+		MemoResultado.Lines.Add('    F' + NomeCampoDelphi + ': ' + TipoCampoDelphi+';');
+		FDMetaInfoCampos.Next;
+	end;
+  MemoResultado.Lines.Add('  public');
 	MemoResultado.Lines.Add('    { public declarations }');    
 	FDMetaInfoCampos.First;
 	while not FDMetaInfoCampos.Eof do
@@ -390,6 +402,11 @@ begin
 		TipoDelphi := 'string';
 end;
 
+procedure TFrmPrincipal.BtnConectarClick(Sender: TObject);
+begin
+	ConectaBancoDeDados(EdtBancoDeDados.Text);
+end;
+
 procedure TFrmPrincipal.btnSalvarClick(Sender: TObject);
 var
   DiretorioRaiz: string;
@@ -406,6 +423,7 @@ begin
     	ForceDirectories(Diretorio);
     NomeArquivo := Diretorio+Format('\Unit%s.Model.pas', [ConvertToCamelCase(String(EdtTabela.Text))]);
     MemoResultado.Lines.SaveToFile(ChangeFileExt(NomeArquivo, '.pas'));
+    Application.MessageBox('Unit salva com sucesso!', 'Salvando unit', MB_OK+MB_ICONINFORMATION);
   end;
 end;
 
@@ -414,7 +432,6 @@ begin
 	FDConnection1.Close;
 	FDConnection1.Params.Database := BD;
 	FDConnection1.Connected       := True;
-	EdtBancoDeDados.Text          := BD;
 	FDMetaInfoTabelas.Active      := True;
   EdtPesquisaTabela.SetFocus;
 end;

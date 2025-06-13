@@ -370,12 +370,27 @@ object FrmPrincipal: TFrmPrincipal
           object EdtBancoDeDados: TSearchBox
             Left = 10
             Top = 9
-            Width = 394
+            Width = 328
             Height = 23
-            Align = alClient
+            Align = alLeft
             TabOrder = 0
             OnInvokeSearch = EdtBancoDeDadosInvokeSearch
-            ExplicitHeight = 21
+          end
+          object BtnConectar: TBitBtn
+            Left = 344
+            Top = 9
+            Width = 60
+            Height = 23
+            Align = alRight
+            Caption = 'Conectar'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+            TabOrder = 1
+            OnClick = BtnConectarClick
           end
         end
         object panLeftGridFields: TPanel
@@ -675,7 +690,6 @@ object FrmPrincipal: TFrmPrincipal
       'Password=masterkey'
       'Database=D:\PROJETOS\Mercados\Dados\PRINCIPAL.FDB'
       'DriverID=FB')
-    Connected = True
     LoginPrompt = False
     Left = 64
     Top = 176
