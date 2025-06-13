@@ -100,11 +100,11 @@
         <DCCReference Include="src\Model\UnitPortalORM.Model.pas"/>
         <DCCReference Include="src\Modulos\InsereTabela\UnitInsereTabela.Model.pas"/>
         <DCCReference Include="src\Modulos\PatternCommand\UnitCommand.Interfaces.pas"/>
-        <DCCReference Include="src\Modulos\Helpers\UnitTabela.Helpers.pas"/>
         <DCCReference Include="src\Modulos\Helpers\UnitConfiguracaoServidor.Singleton.pas"/>
         <DCCReference Include="src\Modulos\FormRTTI\UnitFormRTTI.Interfaces.pas"/>
         <DCCReference Include="src\Modulos\FormRTTI\UnitRTTI.Helper.pas"/>
         <DCCReference Include="src\Modulos\FormRTTI\Model\UnitFormRTTI.Model.pas"/>
+        <DCCReference Include="src\Modulos\Helpers\UnitTabela.Helper.Json.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

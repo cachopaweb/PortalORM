@@ -53,10 +53,10 @@ contains
   UnitPortalORM.Model in 'src\Model\UnitPortalORM.Model.pas',
   UnitInsereTabela.Model in 'src\Modulos\InsereTabela\UnitInsereTabela.Model.pas',
   UnitCommand.Interfaces in 'src\Modulos\PatternCommand\UnitCommand.Interfaces.pas',
-  UnitTabela.Helpers in 'src\Modulos\Helpers\UnitTabela.Helpers.pas',
   UnitConfiguracaoServidor.Singleton in 'src\Modulos\Helpers\UnitConfiguracaoServidor.Singleton.pas',
   UnitFormRTTI.Interfaces in 'src\Modulos\FormRTTI\UnitFormRTTI.Interfaces.pas',
   UnitRTTI.Helper in 'src\Modulos\FormRTTI\UnitRTTI.Helper.pas',
-  UnitFormRTTI.Model in 'src\Modulos\FormRTTI\Model\UnitFormRTTI.Model.pas';
+  UnitFormRTTI.Model in 'src\Modulos\FormRTTI\Model\UnitFormRTTI.Model.pas',
+  UnitTabela.Helper.Json in 'src\Modulos\Helpers\UnitTabela.Helper.Json.pas';
 
 end.

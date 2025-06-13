@@ -10,8 +10,7 @@ uses
 	UnitClientREST.Model.Interfaces,
 	System.SysUtils,
 	System.Generics.Collections,
-	System.Classes,
-	UnitFrmLoading.view;
+	System.Classes;
 
 type
 	THelperTTabelaREST = class helper for TTabela
