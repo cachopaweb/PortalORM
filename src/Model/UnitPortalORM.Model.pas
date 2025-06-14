@@ -152,6 +152,11 @@ type
 implementation
 
 { TBanco }
+{$IFDEF REST}
+uses
+	UnitTabela.Helper.Json,
+  UnitClientREST.Model.Interfaces;
+{$ENDIF}
 
 procedure TBanco.Analisa;
 var
@@ -665,7 +670,15 @@ var
 	Campo       : TCampo;
 	InsereTabela: iInsereTabela;
 	Banco       : TBanco;
+  {$IFDEF REST}
+  Response: TClientResult;
+  {$ENDIF}
 begin
+	{$IFDEF REST}
+  	Response := Self.Post;
+    if not (Response.StatusCode in [200, 201]) then
+    	raise Exception.Create('Erro ao enviar dados para o servidor!'+sLineBreak+'Erro: '+Response.Content+'. '+Response.Error+sLineBreak+'Rota API: '+Response.Route);
+  {$ELSE}
 	try
 		InsereTabela := TModelInsereTabela.New(IBQR);
 		InsereTabela.SetNomeTabela(Self.Nome);
@@ -713,6 +726,7 @@ begin
 				raise Exception.Create('Erro ao gravar o valor de ' + Campo.Nome + ' da Tabela ' + Self.Nome + '.' + #13#13 + E.Message);
 		end;
 	end;
+  {$ENDIF}
 end;
 
 procedure TTabela.VarreCampos;

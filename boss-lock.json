@@ -4,8 +4,8 @@
 	"installedModules": {
 		"https://github.com/cachopaweb/clientrest": {
 			"name": "clientrest",
-			"version": "1.0.3",
-			"hash": "f47c4c669715b2114f20ff0685dc72e9",
+			"version": "1.0.6",
+			"hash": "773498f141c034088b995dea485d2f44",
 			"artifacts": {},
 			"failed": false,
 			"changed": false
