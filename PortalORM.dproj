@@ -47,7 +47,7 @@
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
         <DCC_CBuilderOutput>All</DCC_CBuilderOutput>
         <SanitizedProjectName>PortalORM</SanitizedProjectName>
-        <DCC_UnitSearchPath>$(DCC_UnitSearchPath);modules\.dcp;modules\.dcu;modules;modules\clientrest\src;modules\factory-connections\src\FireDAC;modules\factory-connections\src\IBExpress;modules\factory-connections\src</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>modules\.dcp;modules\.dcu;modules;modules\clientrest\src;modules\factory-connections\src\FireDAC;modules\factory-connections\src\IBExpress;modules\factory-connections\src;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
@@ -66,9 +66,9 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
         <DCC_RemoteDebug>false</DCC_RemoteDebug>
-        <DCC_Define>REST;$(DCC_Define)</DCC_Define>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
+        <DCC_Define>REST;$(DCC_Define)</DCC_Define>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -103,11 +103,11 @@
         <DCCReference Include="src\Model\UnitPortalORM.Model.pas"/>
         <DCCReference Include="src\Modulos\InsereTabela\UnitInsereTabela.Model.pas"/>
         <DCCReference Include="src\Modulos\PatternCommand\UnitCommand.Interfaces.pas"/>
-        <DCCReference Include="src\Modulos\Helpers\UnitConfiguracaoServidor.Singleton.pas"/>
         <DCCReference Include="src\Modulos\FormRTTI\UnitFormRTTI.Interfaces.pas"/>
         <DCCReference Include="src\Modulos\FormRTTI\UnitRTTI.Helper.pas"/>
         <DCCReference Include="src\Modulos\FormRTTI\Model\UnitFormRTTI.Model.pas"/>
-        <DCCReference Include="src\Modulos\Helpers\UnitTabela.Helper.Json.pas"/>
+        <DCCReference Include="src\Modulos\Helpers\UnitTabela.Helpers.pas"/>
+        <DCCReference Include="src\Modulos\Helpers\UnitConfiguracaoServidor.Singleton.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

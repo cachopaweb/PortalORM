@@ -3,16 +3,37 @@
 interface
 
 uses
-	System.Generics.Collections, System.Classes, System.SysUtils,
-	FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error,
-	FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys, FireDAC.Phys.FB, FireDAC.Phys.FBDef,
-	FireDAC.ConsoleUI.Wait, FireDAC.Stan.Param, FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, FireDAC.Phys.IBBase, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
-	System.Rtti, UnitInsereTabela.Model, REST.Json.Types, UnitConnection.Model.Interfaces;
+	System.Generics.Collections,
+	System.Classes,
+	System.SysUtils,
+	FireDAC.Stan.Intf,
+	FireDAC.Stan.Option,
+	FireDAC.Stan.Error,
+	FireDAC.UI.Intf,
+	FireDAC.Phys.Intf,
+	FireDAC.Stan.Def,
+	FireDAC.Stan.Pool,
+	FireDAC.Stan.Async,
+	FireDAC.Phys,
+	FireDAC.Phys.FB,
+	FireDAC.Phys.FBDef,
+	FireDAC.ConsoleUI.Wait,
+	FireDAC.Stan.Param,
+	FireDAC.DatS,
+	FireDAC.DApt.Intf,
+	FireDAC.DApt,
+	FireDAC.Phys.IBBase,
+	FireDAC.Comp.DataSet,
+	FireDAC.Comp.Client,
+	System.Rtti,
+	UnitInsereTabela.Model,
+	REST.Json.Types,
+	UnitConnection.Model.Interfaces;
 
 type
-	TTabela                    = class;
-	TTabelaRelacionamento      = class of TTabela;
-	TTipoRelacionamento        = (UmPraUm, UmPraMuitos);
+	TTabela               = class;
+	TTabelaRelacionamento = class of TTabela;
+	TTipoRelacionamento   = (UmPraUm, UmPraMuitos);
 
 	THelperDateTime = record helper for TDateTime
 		function IsValid: Boolean;
@@ -80,7 +101,7 @@ type
 	private
 		{ private declarations }
 		[JSONMarshalledAttribute(false)]
-		function BuscaValorDataSet(Propriedade: TRttiProperty): TValue;    
+		function BuscaValorDataSet(Propriedade: TRttiProperty): TValue;
 	protected
 		{ protected declarations }
 		[JSONMarshalledAttribute(false)]
@@ -101,11 +122,11 @@ type
 		FBancoDeDados: iConnection;
 		[JSONMarshalledAttribute(false)]
 		FIndiceConexao: integer;
-    [JSONMarshalledAttribute(false)]
-    TransacaoBusca: TFDTransaction;
 		[JSONMarshalledAttribute(false)]
-    IBQRBusca     : TFDQuery;		
-    procedure VarreCampos;
+		TransacaoBusca: TFDTransaction;
+		[JSONMarshalledAttribute(false)]
+		IBQRBusca: TFDQuery;
+		procedure VarreCampos;
 		function BuscaValorCampoReferencia(Propriedades: TDictionary<TRttiProperty, TCampo>; CampoReferencia: string): integer;
 	public
 		{ public declarations }
@@ -114,11 +135,11 @@ type
 		procedure BuscaPorCampo(_CampoBusca, ValorBusca: string; Tentativa: smallint = 0); overload;
 		procedure BuscaPorCampo(_CampoBusca: string; ValorBusca: integer; Tentativa: smallint = 0); overload;
 		procedure BuscaPorCampos(_CamposBusca, ValoresBusca: array of string; Tentativa: smallint = 0); overload;
-    function BuscaListaFilhos(ValorBusca: integer; Tentativa: smallint; Relacionamento: TRelacionamento): TArray<TTabela>;
-    function GeraCodigo(CampoCodigo: string; Tentativa: smallint = 0): integer;
+		function BuscaListaFilhos(ValorBusca: integer; Tentativa: smallint; Relacionamento: TRelacionamento): TArray<TTabela>;
+		function GeraCodigo(CampoCodigo: string; Tentativa: smallint = 0): integer;
 		procedure SalvaNoBanco(Tentativa: smallint = 0);
 		procedure Apagar(Codigo: integer);
-    procedure CriaTabela;
+		procedure CriaTabela;
 		constructor Create(BancoDeDados: TFDConnection; TransacaoExterna: TFDTransaction = nil); overload;
 		constructor Create(BancoDeDados: iConnection); overload;
 		constructor Create; overload;
@@ -153,9 +174,10 @@ implementation
 
 { TBanco }
 {$IFDEF REST}
+
 uses
-	UnitTabela.Helper.Json,
-  UnitClientREST.Model.Interfaces;
+	UnitTabela.Helpers,
+	UnitClientREST.Model.Interfaces;
 {$ENDIF}
 
 procedure TBanco.Analisa;
@@ -374,9 +396,7 @@ begin
 	except
 		on E: Exception do
 		begin
-			if ((Pos('FIELD', UpperCase(E.Message)) > 0) and (Pos('NOT FOUND', UpperCase(E.Message)) > 0) 
-			or (Pos('TABLE UNKNOWN', UpperCase(E.Message)) > 0)) or (Pos('COLUMN UNKNOWN', UpperCase(E.Message)) > 0)
-			and (Tentativa < 5) then
+			if ((Pos('FIELD', UpperCase(E.Message)) > 0) and (Pos('NOT FOUND', UpperCase(E.Message)) > 0) or (Pos('TABLE UNKNOWN', UpperCase(E.Message)) > 0)) or (Pos('COLUMN UNKNOWN', UpperCase(E.Message)) > 0) and (Tentativa < 5) then
 			begin
 				// Caso alguma coluna não exista na tabela, ela será criada
 				Banco := TBanco.Create(TFDConnection(IBQR.Connection));
@@ -449,9 +469,7 @@ begin
 		except
 			on E: Exception do
 			begin
-				if ((Pos('FIELD', UpperCase(E.Message)) > 0) and (Pos('NOT FOUND', UpperCase(E.Message)) > 0)
-        or (Pos('TABLE UNKNOWN', UpperCase(E.Message)) > 0)) or (Pos('COLUMN UNKNOWN', UpperCase(E.Message)) > 0)
-        and (Tentativa < 5) then
+				if ((Pos('FIELD', UpperCase(E.Message)) > 0) and (Pos('NOT FOUND', UpperCase(E.Message)) > 0) or (Pos('TABLE UNKNOWN', UpperCase(E.Message)) > 0)) or (Pos('COLUMN UNKNOWN', UpperCase(E.Message)) > 0) and (Tentativa < 5) then
 				begin
 					// Caso alguma coluna não exista na tabela, ela será criada
 					Banco := TBanco.Create(TFDConnection(IBQRFilhos.Connection));
@@ -472,14 +490,14 @@ begin
 	end;
 end;
 
-procedure TTabela.BuscaPorCampo(_CampoBusca: string; ValorBusca: integer;  Tentativa: smallint);
+procedure TTabela.BuscaPorCampo(_CampoBusca: string; ValorBusca: integer; Tentativa: smallint);
 begin
 	BuscaPorCampo(_CampoBusca, ValorBusca.ToString, Tentativa);
 end;
 
-procedure TTabela.BuscaPorCampo(_CampoBusca, ValorBusca: string;  Tentativa: smallint);
+procedure TTabela.BuscaPorCampo(_CampoBusca, ValorBusca: string; Tentativa: smallint);
 begin
- 	try
+	try
 		IBQRBusca.Close;
 		IBQRBusca.SQL.Clear;
 		IBQRBusca.SQL.Add('SELECT ' + Self.CampoBusca + ' FROM ' + Self.Nome + ' WHERE ' + _CampoBusca + ' = ' + '''' + ValorBusca + '''');
@@ -576,7 +594,7 @@ begin
 	IBQR.Connection := BancoDeDados;
 	if TransacaoExterna <> nil then
 		IBQR.Transaction := TransacaoExterna;
-  // Foram criados estes dois componentes exclusivos para busca, para permitir o Rollback antes da busca.
+	// Foram criados estes dois componentes exclusivos para busca, para permitir o Rollback antes da busca.
 	// Se não tiver componentes dedicados para busca, o rollback cancela os dados já inseridos por outras classes
 	TransacaoBusca            := TFDTransaction.Create(nil);
 	TransacaoBusca.Connection := BancoDeDados;
@@ -610,7 +628,7 @@ begin
 	TransacaoAux            := TFDTransaction.Create(nil);
 	TransacaoAux.Connection := IBQR.Connection;
 	IBQRAux                 := TFDQuery.Create(nil);
-	IBQRAux.Connection        := TransacaoAux.Connection;
+	IBQRAux.Connection      := TransacaoAux.Connection;
 	IBQRAux.Transaction     := TransacaoAux;
 	try
 		IBQRAux.Close;
@@ -670,15 +688,15 @@ var
 	Campo       : TCampo;
 	InsereTabela: iInsereTabela;
 	Banco       : TBanco;
-  {$IFDEF REST}
-  Response: TClientResult;
-  {$ENDIF}
+	{$IFDEF REST}
+	Response: TClientResult;
+	{$ENDIF}
 begin
 	{$IFDEF REST}
-  	Response := Self.Post;
-    if not (Response.StatusCode in [200, 201]) then
-    	raise Exception.Create('Erro ao enviar dados para o servidor!'+sLineBreak+'Erro: '+Response.Content+'. '+Response.Error+sLineBreak+'Rota API: '+Response.Route);
-  {$ELSE}
+	Response := Self.Post;
+	if not(Response.StatusCode in [200, 201]) then
+		raise Exception.Create('Erro ao enviar dados para o servidor!' + sLineBreak + 'Erro: ' + Response.Content + '. ' + Response.Error + sLineBreak + 'Rota API: ' + Response.Route);
+	{$ELSE}
 	try
 		InsereTabela := TModelInsereTabela.New(IBQR);
 		InsereTabela.SetNomeTabela(Self.Nome);
@@ -726,7 +744,7 @@ begin
 				raise Exception.Create('Erro ao gravar o valor de ' + Campo.Nome + ' da Tabela ' + Self.Nome + '.' + #13#13 + E.Message);
 		end;
 	end;
-  {$ENDIF}
+	{$ENDIF}
 end;
 
 procedure TTabela.VarreCampos;
@@ -781,21 +799,20 @@ begin
 	Banco.DisposeOf;
 end;
 
-
 { procedure TTabela.BuscaPorCampos(_CamposBusca, ValoresBusca: array of string;
-  Tentativa: smallint);
-begin
+	Tentativa: smallint);
+	begin
 
-end;
+	end;
 
-TRelacionamento }
+	TRelacionamento }
 
 constructor TRelacionamento.Create(_Tabela, _CampoBusca, _CampoReferencia: string; _Classe: TTabelaRelacionamento; _TipoRelacionamento: TTipoRelacionamento);
 begin
-	FTabela         := _Tabela;
-	CampoBusca      := _CampoBusca;
-	CampoReferencia := _CampoReferencia;
-	Classe := _Classe;
+	FTabela            := _Tabela;
+	CampoBusca         := _CampoBusca;
+	CampoReferencia    := _CampoReferencia;
+	Classe             := _Classe;
 	TipoRelacionamento := _TipoRelacionamento;
 end;
 
