@@ -41,8 +41,7 @@ implementation
 uses
 	Rest.Json,
 	UnitClientREST.Model,
-	UnitConfiguracaoServidor.Singleton,
-	Vcl.Forms;
+	UnitConfiguracaoServidor.Singleton;
 
 { THelperTTabela }
 function THelperTTabelaREST.BuscaBaseURL: string;
