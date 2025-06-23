@@ -599,6 +599,7 @@ begin
 	TransacaoBusca            := TFDTransaction.Create(nil);
 	TransacaoBusca.Connection := BancoDeDados;
 	IBQRBusca                 := TFDQuery.Create(nil);
+  IBQRBusca.Connection 			:= BancoDeDados;
 	IBQRBusca.Transaction     := TransacaoBusca;
 end;
 
