@@ -15,7 +15,8 @@ uses
 type
 	THelperTTabelaREST = class helper for TTabela
 	private
-		function BuscaBaseURL: string;		
+		function BuscaBaseURL: string;
+    function PreparaFiltros(Filtros: TArray<string>): string;		
 	public
 		function Clone<T: TTabela, constructor>(Tabela: T): T;overload;
     function Clone(Source: TObject): TObject;overload;
@@ -26,6 +27,7 @@ type
 		function TemBaseURL: Boolean;
 		// metodos HTTP
 		function Get<T: TTabela, constructor>: TList<T>; overload;
+    function Get<T: TTabela, constructor>(QueryParams: TArray<string>): TList<T>; overload;
 		function Get<T: TTabela, constructor>(id: integer): T; overload;
 		function Post: TClientResult;
 		function Put: TClientResult;
@@ -63,6 +65,43 @@ begin
 		end;
 	finally
 		Tipo.DisposeOf;
+	end;
+end;
+
+function THelperTTabelaREST.PreparaFiltros(Filtros: TArray<string>): string;
+begin
+  Result := ''.Join('&', Filtros);
+end;
+
+function THelperTTabelaREST.Get<T>(QueryParams: TArray<string>): TList<T>;
+var
+	Response: IFuture<TClientResult>;
+	ajson   : TJSONArray;
+	ojson   : TJSONValue;
+	BaseURL : string;
+begin
+	BaseURL := BuscaBaseURL;
+	Result  := TList<T>.Create;
+	try
+		// Criando uma tarefa assíncrona
+		Response := TTask.Future<TClientResult>(
+			function: TClientResult
+			begin
+				Result := TClientREST.New(BaseURL+'?'+PreparaFiltros(QueryParams)).Get();
+			end);
+		if Response.Value.StatusCode = 200 then
+		begin
+			ajson := TJSONObject.ParseJSONValue(Response.Value.Content) as TJSONArray;
+			for ojson in ajson do
+			begin
+				Result.Add(T.Create.fromJson<T>(ojson.ToJson));
+			end;
+		end
+		else
+		begin
+			raise Exception.Create('Response: ' + Response.Value.Content + sLineBreak + 'Error:' + Response.Value.Error + sLineBreak + 'StatusCode:' + Response.Value.StatusCode.ToString);
+		end;
+	finally
 	end;
 end;
 
