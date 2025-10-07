@@ -1,5 +1,5 @@
 unit UnitTabela.Helpers;
-
+
 interface
 
 uses
@@ -10,29 +10,33 @@ uses
 	UnitClientREST.Model.Interfaces,
 	System.SysUtils,
 	System.Generics.Collections,
-	System.Classes;
+	System.Classes, UnitConnection.Model.Interfaces;
 
 type
 	THelperTTabelaREST = class helper for TTabela
 	private
 		function BuscaBaseURL: string;
-    function PreparaFiltros(Filtros: TArray<string>): string;		
+		function PreparaFiltros(Filtros: TArray<string>): string;
 	public
-		function Clone<T: TTabela, constructor>(Tabela: T): T;overload;
-    function Clone(Source: TObject): TObject;overload;
+		function Clone<T: TTabela, constructor>(Tabela: T): T; overload;
+		function Clone(Source: TObject): TObject; overload;
 		function ToJson: string;
-    function ToJsonObject: TJSONObject;overload;
-    function ToJsonObject(Source: TObject): TJSONObject;overload;
+		function ToJsonObject: TJSONObject; overload;
+		function ToJsonObject(Source: TObject): TJSONObject; overload;
 		function fromJson<T: TTabela, constructor>(Json: string): T;
 		function TemBaseURL: Boolean;
 		// metodos HTTP
 		function Get<T: TTabela, constructor>: TList<T>; overload;
-    function Get<T: TTabela, constructor>(QueryParams: TArray<string>): TList<T>; overload;
+		function Get<T: TTabela, constructor>(QueryParams: TArray<string>): TList<T>; overload;
 		function Get<T: TTabela, constructor>(id: integer): T; overload;
 		function Post: TClientResult;
 		function Put: TClientResult;
 		function Delete(id: integer): TClientResult;
 		function GetDataComboBox<T: TTabela, constructor>(DisplayField: string; SearchFieldName: string = ''; SearchFieldValue: string = ''): TStringList;
+		function PreencheLista<T: TTabela, constructor>(CampoReferencia: string; ValorBusca: integer): TList<T>; overload;
+		function PreencheLista<T: TTabela, constructor>(CampoReferencia: string; ValorBusca: string): TList<T>; overload;
+		function PreencheLista<T: TTabela, constructor>(_CamposBusca, ValoresBusca: array of string; OrderBy: string = ''): TList<T>; overload;
+		function PreencheListaWhere<T: TTabela, constructor>(CondicaoWhere: string; OrderBy: string = ''): TList<T>;
 	end;
 
 var
@@ -43,7 +47,8 @@ implementation
 uses
 	Rest.Json,
 	UnitClientREST.Model,
-	UnitConfiguracaoServidor.Singleton;
+	UnitConfiguracaoServidor.Singleton,
+	UnitDatabase;
 
 { THelperTTabela }
 function THelperTTabelaREST.BuscaBaseURL: string;
@@ -68,9 +73,93 @@ begin
 	end;
 end;
 
+function THelperTTabelaREST.PreencheLista<T>(CampoReferencia: string; ValorBusca: integer): TList<T>;
+begin
+	Result := PreencheLista<T>(CampoReferencia, ValorBusca.ToString);
+end;
+
+function THelperTTabelaREST.PreencheLista<T>(CampoReferencia, ValorBusca: string): TList<T>;
+var
+	Query    : iQuery;
+begin
+	Query             := TDatabase.Query;
+	Result            := TList<T>.Create;
+	try
+		Query.Clear;
+		Query.Add('SELECT * FROM ' + Self.Nome + ' WHERE ' + CampoReferencia + ' = ' + '''' + ValorBusca + '''');
+		Query.Open;
+		Query.Dataset.First;
+		while not Query.Dataset.Eof do
+		begin
+			Result.Add(TTabela(T.Create).Create(TDatabase.Connection));
+			TTabela(Result[Pred(Result.Count)]).BuscaDadosTabela(Query.Dataset.FieldByName(Self.CampoBusca).AsInteger);
+			Query.Dataset.Next;
+		end;
+	except on E: Exception do
+  	raise Exception.Create(E.Message);
+	end;
+end;
+
+function THelperTTabelaREST.PreencheLista<T>(_CamposBusca, ValoresBusca: array of string; OrderBy: string): TList<T>;
+var
+	Query    : iQuery;
+	CamposAux: string;
+	i        : integer;
+begin
+	CamposAux := '';
+	for i     := Low(_CamposBusca) to High(_CamposBusca) do
+	begin
+		CamposAux := CamposAux + _CamposBusca[i] + ' = ''' + ValoresBusca[i] + ''' AND ';
+	end;
+	CamposAux := CamposAux.Substring(0, CamposAux.Length - 5);
+	//
+	Query             := TDatabase.Query;
+	Result            := TList<T>.Create;
+	try
+		Query.Clear;
+		Query.Add('SELECT ' + Self.CampoBusca + ' FROM ' + Self.Nome + ' WHERE ' + CamposAux);
+		if OrderBy <> '' then
+			Query.Add(' ORDER BY ' + OrderBy);
+		Query.Open;
+		Query.DataSet.First;
+		while not Query.DataSet.Eof do
+		begin
+			Result.Add(TTabela(T.Create).Create(TDatabase.Connection));
+			TTabela(Result[Pred(Result.Count)]).BuscaDadosTabela(Query.DataSet.FieldByName(Self.CampoBusca).AsInteger);
+			Query.DataSet.Next;
+		end;
+	except on E: Exception do
+  	raise Exception.Create(E.Message);
+	end;
+end;
+
+function THelperTTabelaREST.PreencheListaWhere<T>(CondicaoWhere, OrderBy: string): TList<T>;
+var
+	Query    : iQuery;
+begin
+	Query             := TDatabase.Query;
+	Result            := TList<T>.Create;
+	try
+		Query.Clear;
+		Query.Add('SELECT ' + Self.CampoBusca + ' FROM ' + Self.Nome + ' WHERE ' + CondicaoWhere);
+		if OrderBy <> '' then
+			Query.Add(' ORDER BY ' + OrderBy);
+		Query.Open;
+		Query.DataSet.First;
+		while not Query.DataSet.Eof do
+		begin
+			Result.Add(TTabela(T.Create).Create(TDatabase.Connection));
+			TTabela(Result[Pred(Result.Count)]).BuscaDadosTabela(Query.DataSet.FieldByName(Self.CampoBusca).AsInteger);
+			Query.DataSet.Next;
+		end;
+	except on E: Exception do
+  	raise Exception.Create(E.Message);
+	end;
+end;
+
 function THelperTTabelaREST.PreparaFiltros(Filtros: TArray<string>): string;
 begin
-  Result := ''.Join('&', Filtros);
+	Result := ''.Join('&', Filtros);
 end;
 
 function THelperTTabelaREST.Get<T>(QueryParams: TArray<string>): TList<T>;
@@ -87,7 +176,7 @@ begin
 		Response := TTask.Future<TClientResult>(
 			function: TClientResult
 			begin
-				Result := TClientREST.New(BaseURL+'?'+PreparaFiltros(QueryParams)).Get();
+				Result := TClientREST.New(BaseURL + '?' + PreparaFiltros(QueryParams)).Get();
 			end);
 		if Response.Value.StatusCode = 200 then
 		begin
@@ -151,7 +240,7 @@ begin
 	try
 		BaseURL := BuscaBaseURL;
 		if not SearchFieldName.IsEmpty then
-			Response := TClientREST.New(BaseURL + '?' + SearchFieldName+'='+SearchFieldValue).Get()
+			Response := TClientREST.New(BaseURL + '?' + SearchFieldName + '=' + SearchFieldValue).Get()
 		else
 			Response := TClientREST.New(BaseURL).Get();
 		if Response.StatusCode = 200 then
@@ -205,77 +294,77 @@ end;
 
 function THelperTTabelaREST.Clone(Source: TObject): TObject;
 var
-  ctx: TRttiContext;
-  typ: TRttiType;
-  prop: TRttiProperty;
-  Instance: TObject;
+	ctx     : TRttiContext;
+	typ     : TRttiType;
+	prop    : TRttiProperty;
+	Instance: TObject;
 begin
-  ctx := TRttiContext.Create;
-  try
-    typ := ctx.GetType(Source.ClassType);
-    Instance := Source.ClassType.Create; // Cria um novo objeto do mesmo tipo
+	ctx := TRttiContext.Create;
+	try
+		typ      := ctx.GetType(Source.ClassType);
+		Instance := Source.ClassType.Create; // Cria um novo objeto do mesmo tipo
 
-    for prop in typ.GetProperties do
-    begin
-      if prop.IsWritable then
-        prop.SetValue(Instance, prop.GetValue(Source)); // Copia valores das propriedades
-    end;
+		for prop in typ.GetProperties do
+		begin
+			if prop.IsWritable then
+				prop.SetValue(Instance, prop.GetValue(Source)); // Copia valores das propriedades
+		end;
 
-    Result := Instance;
-  finally
-    ctx.Free;
-  end;
+		Result := Instance;
+	finally
+		ctx.Free;
+	end;
 end;
 
 function THelperTTabelaREST.Delete(id: integer): TClientResult;
 var
-	BaseURL: string;
-  Response: IFuture<TClientResult>;
+	BaseURL : string;
+	Response: IFuture<TClientResult>;
 begin
-	BaseURL := BuscaBaseURL;
-  Response := TTask.Future<TClientResult>(
-    function: TClientResult
-    begin  
-      // envia para o servidor
-      Result := TClientREST.New(BaseURL + '/' + id.ToString).AddHeader('Content-Type', 'application/json').Delete();
-    end);
-  Result := Response.Value;
+	BaseURL  := BuscaBaseURL;
+	Response := TTask.Future<TClientResult>(
+		function: TClientResult
+		begin
+			// envia para o servidor
+			Result := TClientREST.New(BaseURL + '/' + id.ToString).AddHeader('Content-Type', 'application/json').Delete();
+		end);
+	Result := Response.Value;
 end;
 
 function THelperTTabelaREST.Post: TClientResult;
 var
-	ojson  : TJSONObject;
-	BaseURL: string;
-  Response: IFuture<TClientResult>;
+	ojson   : TJSONObject;
+	BaseURL : string;
+	Response: IFuture<TClientResult>;
 begin
 	BaseURL := BuscaBaseURL;
-  // transforma em json
-  ojson := ToJsonObject(Clone(Self));
-  Response := TTask.Future<TClientResult>(
-    function: TClientResult
-    begin
-      // envia para o servidor
-      Result := TClientREST.New(BaseURL).AddHeader('Content-Type', 'application/json').AddBody(ojson).Post();
-    end);
-  Result := Response.Value;		
+	// transforma em json
+	ojson    := ToJsonObject(Clone(Self));
+	Response := TTask.Future<TClientResult>(
+		function: TClientResult
+		begin
+			// envia para o servidor
+			Result := TClientREST.New(BaseURL).AddHeader('Content-Type', 'application/json').AddBody(ojson).Post();
+		end);
+	Result := Response.Value;
 end;
 
 function THelperTTabelaREST.Put: TClientResult;
 var
-	ojson  : TJSONObject;
-	BaseURL: string;
-  Response: IFuture<TClientResult>;
+	ojson   : TJSONObject;
+	BaseURL : string;
+	Response: IFuture<TClientResult>;
 begin
 	BaseURL := BuscaBaseURL;
-  // transforma em json
-  ojson := ToJsonObject(Clone(Self));
-  Response := TTask.Future<TClientResult>(
-    function: TClientResult
-    begin
-      // envia para o servidor
-      Result := TClientREST.New(BaseURL).AddHeader('Content-Type', 'application/json').AddBody(ojson).Put();
-    end);
-  Result := Response.Value;
+	// transforma em json
+	ojson    := ToJsonObject(Clone(Self));
+	Response := TTask.Future<TClientResult>(
+		function: TClientResult
+		begin
+			// envia para o servidor
+			Result := TClientREST.New(BaseURL).AddHeader('Content-Type', 'application/json').AddBody(ojson).Put();
+		end);
+	Result := Response.Value;
 end;
 
 function THelperTTabelaREST.fromJson<T>(Json: string): T;
@@ -302,7 +391,7 @@ begin
 			begin
 				Result := TClientREST.New(BaseURL + '/' + id.ToString).Get();
 			end);
-    if Response.Value.StatusCode = 200 then
+		if Response.Value.StatusCode = 200 then
 		begin
 			ojson := TJSONObject.ParseJSONValue(Response.Value.Content) as TJSONObject;
 			if not ojson.ToJson.IsEmpty then
@@ -334,5 +423,5 @@ begin
 	Result := TJson.ObjectToJsonObject(Self);
 end;
 
-
 end.
+
