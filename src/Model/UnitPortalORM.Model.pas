@@ -601,6 +601,7 @@ begin
 	IBQRBusca                 := TFDQuery.Create(nil);
   IBQRBusca.Connection 			:= BancoDeDados;
 	IBQRBusca.Transaction     := TransacaoBusca;
+  CriaTabela;
 end;
 
 destructor TTabela.Destroy;

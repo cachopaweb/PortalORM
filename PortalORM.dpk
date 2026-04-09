@@ -57,9 +57,9 @@ contains
   UnitRTTI.Helper in 'src\Modulos\FormRTTI\UnitRTTI.Helper.pas',
   UnitFormRTTI.Model in 'src\Modulos\FormRTTI\Model\UnitFormRTTI.Model.pas',
   UnitTabela.Helpers in 'src\Modulos\Helpers\UnitTabela.Helpers.pas',
-  UnitConfiguracaoServidor.Singleton in 'src\Modulos\Helpers\UnitConfiguracaoServidor.Singleton.pas',
   UnitDatabase in 'src\Utils\UnitDatabase.pas',
-  UnitConstants in 'src\Utils\UnitConstants.pas';
+  UnitConstants in 'src\Utils\UnitConstants.pas',
+  UnitConfiguracaoServidor.Singleton in 'src\Modulos\Helpers\UnitConfiguracaoServidor.Singleton.pas';
 
 end.
 
