@@ -582,6 +582,9 @@ begin
 end;
 
 constructor TTabela.Create(BancoDeDados: TFDConnection; TransacaoExterna: TFDTransaction = nil);
+var
+	Propriedade   : TRttiProperty;
+	Relacionamento: TRelacionamento;
 begin
 	{ Create a new Rtti context }
 	Contexto        := TRttiContext.Create;
@@ -601,6 +604,24 @@ begin
 	IBQRBusca                 := TFDQuery.Create(nil);
   IBQRBusca.Connection 			:= BancoDeDados;
 	IBQRBusca.Transaction     := TransacaoBusca;
+  // busca relacionamentos e cria-os
+	for Propriedade in Relacionamentos.Keys do
+	begin
+		if Relacionamentos.TryGetValue(Propriedade, Relacionamento) then
+		begin
+			case Relacionamento.TipoRelacionamento of
+				UmPraUm:
+					begin
+						// TabelaFilha := Relacionamento.Classe.Create(IBQR.Database);
+						Propriedade.SetValue(Self, Relacionamento.Classe.Create(TFDConnection(IBQR.Connection), TransacaoExterna));
+					end;
+				UmPraMuitos:
+					begin
+
+					end;
+			end;
+		end;
+	end;
   CriaTabela;
 end;
 
