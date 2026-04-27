@@ -28,7 +28,8 @@ uses
 	System.Rtti,
 	UnitInsereTabela.Model,
 	REST.Json.Types,
-	UnitConnection.Model.Interfaces;
+	UnitConnection.Model.Interfaces,
+	Data.DB;
 
 type
 	TTabela               = class;
@@ -101,45 +102,50 @@ type
 	private
 		{ private declarations }
 		[JSONMarshalledAttribute(false)]
-		function BuscaValorDataSet(Propriedade: TRttiProperty): TValue;
+		FTabelaFilha: TObject;
+		function BuscaValorDataSet(Query: TDataset; Propriedade: TRttiProperty): TValue;
 	protected
 		{ protected declarations }
-		[JSONMarshalledAttribute(false)]
+		[JSONMarshalled(false)]
 		Nome: string;
-		[JSONMarshalledAttribute(false)]
+		[JSONMarshalled(false)]
 		CampoBusca: string;
-		[JSONMarshalledAttribute(false)]
+		[JSONMarshalled(false)]
 		Contexto: TRttiContext;
-		[JSONMarshalledAttribute(false)]
+		[JSONMarshalled(false)]
 		IBQR: TFDQuery;
-		[JSONMarshalledAttribute(false)]
+		[JSONMarshalled(false)]
 		Campos: TList<TCampo>;
-		[JSONMarshalledAttribute(false)]
+		[JSONMarshalled(false)]
 		Propriedades: TDictionary<TRttiProperty, TCampo>;
-		[JSONMarshalledAttribute(false)]
+		[JSONMarshalled(false)]
 		Relacionamentos: TDictionary<TRttiProperty, TRelacionamento>;
-		[JSONMarshalledAttribute(false)]
+		[JSONMarshalled(false)]
 		FBancoDeDados: iConnection;
-		[JSONMarshalledAttribute(false)]
+		[JSONMarshalled(false)]
 		FIndiceConexao: integer;
-		[JSONMarshalledAttribute(false)]
+		[JSONMarshalled(false)]
 		TransacaoBusca: TFDTransaction;
-		[JSONMarshalledAttribute(false)]
+		[JSONMarshalled(false)]
 		IBQRBusca: TFDQuery;
 		procedure VarreCampos;
 		function BuscaValorCampoReferencia(Propriedades: TDictionary<TRttiProperty, TCampo>; CampoReferencia: string): integer;
 	public
 		{ public declarations }
-		procedure BuscaDadosTabela(ValorBusca: string; Tentativa: smallint = 0; ClausulaWhere: string = ''); overload;
-		procedure BuscaDadosTabela(ValorBusca: integer; Tentativa: smallint = 0; ClausulaWhere: string = ''); overload;
+		procedure BuscaDadosTabela(ValorBusca: string; Tentativa: smallint = 0; ClausulaWhere: string = ''; CamposEspecificos: string = ''); overload;
+		procedure BuscaDadosTabela(ValorBusca: integer; Tentativa: smallint = 0; ClausulaWhere: string = ''; CamposEspecificos: string = ''); overload;
 		procedure BuscaPorCampo(_CampoBusca, ValorBusca: string; Tentativa: smallint = 0); overload;
 		procedure BuscaPorCampo(_CampoBusca: string; ValorBusca: integer; Tentativa: smallint = 0); overload;
 		procedure BuscaPorCampos(_CamposBusca, ValoresBusca: array of string; Tentativa: smallint = 0); overload;
-		function BuscaListaFilhos(ValorBusca: integer; Tentativa: smallint; Relacionamento: TRelacionamento): TArray<TTabela>;
+		function BuscaListaFilhos(ValorBusca: integer; Tentativa: smallint; Relacionamento: TRelacionamento): TList<TTabela>;
 		function GeraCodigo(CampoCodigo: string; Tentativa: smallint = 0): integer;
-		procedure SalvaNoBanco(Tentativa: smallint = 0);
-		procedure Apagar(Codigo: integer);
+		function IncrementaGenerator(NomeGenerator: string): integer;
+		procedure SalvaNoBanco(Tentativa: smallint = 0; Comitar: Boolean = True);
+		procedure Apagar(Codigo: integer; Comitar: Boolean = True);
+		procedure Commit;
 		procedure CriaTabela;
+		[JSONMarshalled(false)]
+		property TabelaFilha: TObject read FTabelaFilha write FTabelaFilha;
 		constructor Create(BancoDeDados: TFDConnection; TransacaoExterna: TFDTransaction = nil); overload;
 		constructor Create(BancoDeDados: iConnection); overload;
 		constructor Create; overload;
@@ -159,12 +165,14 @@ type
 		procedure CriaTabela(Tabela: TTabela);
 	protected
 		{ protected declarations }
-		IBQR: TFDQuery;
+		IBQR     : TFDQuery;
+		Transacao: TFDTransaction;
 	public
 		{ public declarations }
 		Tabelas: TList<TTabela>;
 		procedure Analisa;
-		constructor Create(BancoDeDados: TFDConnection);
+		constructor Create(BancoDeDados: TFDConnection); overload;
+		constructor Create; overload;
 		destructor Destroy; override;
 	published
 		{ published declarations }
@@ -285,17 +293,31 @@ end;
 
 constructor TBanco.Create(BancoDeDados: TFDConnection);
 begin
-	IBQR            := TFDQuery.Create(BancoDeDados);
-	IBQR.Connection := BancoDeDados;
-	Tabelas         := TList<TTabela>.Create;
+	Transacao        := TFDTransaction.Create(BancoDeDados);
+	IBQR             := TFDQuery.Create(BancoDeDados);
+	IBQR.Connection  := BancoDeDados;
+	IBQR.Transaction := Transacao;
+	Tabelas          := TList<TTabela>.Create;
+end;
+
+constructor TBanco.Create;
+begin
+	Tabelas := TList<TTabela>.Create;
 end;
 
 procedure TBanco.CriaTabela(Tabela: TTabela);
 var
-	SQL   : string;
-	Campos: string;
-	Campo : TCampo;
+	SQL         : string;
+	Campos      : string;
+	Campo       : TCampo;
+	IBQRAux     : TFDQuery;
+	TransacaoAux: TFDTransaction;
 begin
+	TransacaoAux            := TFDTransaction.Create(nil);
+	TransacaoAux.Connection := IBQR.Connection;
+	IBQRAux                 := TFDQuery.Create(nil);
+	IBQRAux.Connection      := TransacaoAux.Connection;
+	IBQRAux.Transaction     := TransacaoAux;
 	try
 		// Faz a varredura dos campos
 		Campos := '';
@@ -306,21 +328,28 @@ begin
 		// Tira os dois ultimos caracteres
 		Campos := Campos.Substring(0, Campos.Length - 2);
 		SQL    := 'CREATE TABLE ' + Tabela.Nome + '(' + Campos + ')';
-		IBQR.Close;
-		IBQR.SQL.Clear;
-		IBQR.SQL.Add(SQL);
-		IBQR.ExecSQL;
+		IBQRAux.Close;
+		IBQRAux.SQL.Clear;
+		IBQRAux.SQL.Add(SQL);
+		IBQRAux.ExecSQL;
+		if IBQRAux.Transaction.Active then
+			IBQRAux.Transaction.Commit;
 	except
 		on E: Exception do
 		begin
+			if IBQRAux.Transaction.Active then
+				IBQRAux.Transaction.Rollback;
 			raise Exception.Create('Houve erro ao criar a Tabela ' + Tabela.Nome + #13#13 + E.Message);
 		end;
 	end;
+	IBQRAux.DisposeOf;
+	TransacaoAux.DisposeOf;
 end;
 
 destructor TBanco.Destroy;
 begin
 	IBQR.DisposeOf;
+	Transacao.DisposeOf;
 	if Assigned(Tabelas) then
 		Tabelas.DisposeOf;
 	if Assigned(FListaTabelas) then
@@ -348,7 +377,7 @@ end;
 
 { TTabela }
 
-procedure TTabela.BuscaDadosTabela(ValorBusca: string; Tentativa: smallint = 0; ClausulaWhere: string = '');
+procedure TTabela.BuscaDadosTabela(ValorBusca: string; Tentativa: smallint = 0; ClausulaWhere: string = ''; CamposEspecificos: string = '');
 var
 	Propriedade         : TRttiProperty;
 	Banco               : TBanco;
@@ -356,21 +385,33 @@ var
 	Relacionamento      : TRelacionamento;
 	Value               : TValue;
 	ValorCampoReferencia: integer;
+	Campos              : string;
 begin
 	try
-		IBQR.Close;
-		IBQR.SQL.Clear;
-		IBQR.SQL.Add('SELECT * FROM ' + Self.Nome + ' WHERE ' + Self.CampoBusca + ' = ' + ValorBusca.QuotedString);
+		// Poderá buscar todos os campos ou apenas os campos informados
+		if CamposEspecificos = '' then
+			Campos := '*'
+		else
+			Campos := CamposEspecificos;
+		if IBQRBusca.Transaction.Active then
+			IBQRBusca.Transaction.Rollback;
+		IBQRBusca.Close;
+		IBQRBusca.SQL.Clear;
+		IBQRBusca.SQL.Add('SELECT ' + Campos + ' FROM ' + Self.Nome + ' WHERE ' + Self.Nome + '.' + Self.CampoBusca + ' = ' + ValorBusca.QuotedString);
 		if ClausulaWhere <> '' then
-			IBQR.SQL.Add(' ' + ClausulaWhere);
-		IBQR.Open;
+			IBQRBusca.SQL.Add(' ' + ClausulaWhere);
+		IBQRBusca.Open;
 		// preenche o valor das propriedades
 		for Propriedade in Propriedades.Keys do
 		begin
-			Value := BuscaValorDataSet(Propriedade);
-			Propriedade.SetValue(Self, Value);
+			// filtra apenas pelos campos existentes no Dataset
+			if CamposEspecificos.IsEmpty or Assigned(IBQRBusca.FindField(Propriedades.Items[Propriedade].Nome)) then
+			begin
+				Value := BuscaValorDataSet(IBQRBusca, Propriedade);
+				Propriedade.SetValue(Self, Value);
+			end;
 		end;
-		// busca relacionamentos e preeche-os
+		// busca relacionamentos e preenche-os
 		for Propriedade in Relacionamentos.Keys do
 		begin
 			if Relacionamentos.TryGetValue(Propriedade, Relacionamento) then
@@ -380,104 +421,117 @@ begin
 					UmPraUm:
 						begin
 							ValorCampoReferencia := BuscaValorCampoReferencia(Propriedades, Relacionamento.CampoReferencia);
-							TabelaFilha.BuscaDadosTabela(ValorCampoReferencia);
+							TabelaFilha.BuscaPorCampo(Relacionamento.CampoBusca, ValorCampoReferencia);
 							Value := TabelaFilha;
-							Propriedade.SetValue(Self, Value);
 						end;
 					UmPraMuitos:
 						begin
 							TabelaFilha.CampoBusca := Relacionamento.CampoBusca;
-							Value                  := TValue.From(TabelaFilha.BuscaListaFilhos(ValorBusca.ToInteger, Tentativa, Relacionamento));
-							Propriedade.SetValue(Self, Value);
+							Value                  := TabelaFilha.BuscaListaFilhos(ValorBusca.ToInteger, 0, Relacionamento);
 						end;
 				end;
+				Propriedade.SetValue(Self, Value);
 			end;
 		end;
 	except
 		on E: Exception do
 		begin
-			if ((Pos('FIELD', UpperCase(E.Message)) > 0) and (Pos('NOT FOUND', UpperCase(E.Message)) > 0) or (Pos('TABLE UNKNOWN', UpperCase(E.Message)) > 0)) or (Pos('COLUMN UNKNOWN', UpperCase(E.Message)) > 0) and (Tentativa < 5) then
+			if ((Pos('FIELD', UpperCase(E.Message)) > 0) and (Pos('NOT FOUND', UpperCase(E.Message)) > 0) or (Pos('TABLE UNKNOWN', UpperCase(E.Message)) > 0) or (Pos('COLUMN UNKNOWN', UpperCase(E.Message)) > 0)) and (Tentativa < 5) then
 			begin
 				// Caso alguma coluna não exista na tabela, ela será criada
-				Banco := TBanco.Create(TFDConnection(IBQR.Connection));
-				VarreCampos;
-				Banco.Tabelas.Add(Self);
-				Banco.Analisa;
-				Banco.DisposeOf;
-				BuscaDadosTabela(ValorBusca, Tentativa + 1, ClausulaWhere);
+				CriaTabela;
+				BuscaDadosTabela(ValorBusca, Tentativa + 1, ClausulaWhere, CamposEspecificos);
 			end
 			else
-				raise Exception.Create('Erro ao ler o valor de ' + Propriedades.Items[Propriedade].Nome + ' da Tabela ' + Self.Nome + '.' + #13#13 + E.Message);
+			begin
+      	try
+          if Propriedades.ContainsKey(Propriedade) then
+            raise Exception.Create('Erro ao ler o valor de ' + Propriedades.Items[Propriedade].Nome + ' da Tabela ' + Self.Nome + '.' + #13#13 + E.Message)
+          else
+            raise Exception.Create('Erro ao buscar valores da Tabela ' + Self.Nome + '.' + #13#13 + E.Message);
+      	except
+          raise Exception.Create(E.Message);    
+        end;
+			end;
 		end;
 	end;
 	//
-	IBQR.Close;
+	IBQRBusca.Close;
+	if IBQRBusca.Transaction.Active then
+		IBQRBusca.Transaction.Rollback;
 end;
 
-procedure TTabela.Apagar(Codigo: integer);
-var
-	Propriedade: TRttiProperty;
-	Banco      : TBanco;
-	Value      : TValue;
+procedure TTabela.Apagar(Codigo: integer; Comitar: Boolean = True);
 begin
 	try
+		if Comitar then
+		begin
+			if IBQR.Transaction.Active then
+				IBQR.Transaction.Rollback;
+		end;
 		IBQR.Close;
 		IBQR.SQL.Clear;
 		IBQR.SQL.Add('DELETE FROM ' + Self.Nome + ' WHERE ' + Self.CampoBusca + ' = ' + Codigo.ToString);
 		IBQR.ExecSQL;
+		if Comitar then
+			if IBQR.Transaction.Active then
+				IBQR.Transaction.Commit;
 	except
 		on E: Exception do
 		begin
-			raise Exception.Create('Erro ao deletar registro da tabela de ' + Self.Nome + '.' + #13#13 + E.Message);
+			if Comitar then
+				if IBQR.Transaction.Active then
+					IBQR.Transaction.Rollback;
+			raise Exception.Create('Erro ao deletar registro da tabela ' + Self.Nome + '.' + #13#13 + E.Message);
 		end;
 	end;
 	//
+	if Comitar then
+	begin
+		IBQR.Close;
+		if IBQR.Transaction.Active then
+			IBQR.Transaction.Rollback;
+	end;
 end;
 
-procedure TTabela.BuscaDadosTabela(ValorBusca: integer; Tentativa: smallint = 0; ClausulaWhere: string = '');
+procedure TTabela.BuscaDadosTabela(ValorBusca: integer; Tentativa: smallint = 0; ClausulaWhere: string = ''; CamposEspecificos: string = '');
 begin
-	BuscaDadosTabela(ValorBusca.ToString, Tentativa, ClausulaWhere);
+	BuscaDadosTabela(ValorBusca.ToString, Tentativa, ClausulaWhere, CamposEspecificos);
 end;
 
-function TTabela.BuscaListaFilhos(ValorBusca: integer; Tentativa: smallint; Relacionamento: TRelacionamento): TArray<TTabela>;
+function TTabela.BuscaListaFilhos(ValorBusca: integer; Tentativa: smallint; Relacionamento: TRelacionamento): TList<TTabela>;
 var
 	Propriedade: TRttiProperty;
-	Banco      : TBanco;
-	Value      : TValue;
 	IBQRFilhos : TFDQuery;
-	i          : integer;
 begin
-	IBQRFilhos            := TFDQuery.Create(nil);
-	IBQRFilhos.Connection := IBQR.Connection;
+	IBQRFilhos             := TFDQuery.Create(nil);
+	IBQRFilhos.Connection  := IBQR.Connection;
+	IBQRFilhos.Transaction := IBQR.Transaction;
 	try
 		try
+			if IBQRFilhos.Transaction.Active then
+				IBQRFilhos.Transaction.Rollback;
 			IBQRFilhos.Close;
 			IBQRFilhos.SQL.Clear;
 			IBQRFilhos.SQL.Add('SELECT * FROM ' + Self.Nome + ' WHERE ' + Relacionamento.CampoReferencia + ' = ' + ValorBusca.ToString);
 			IBQRFilhos.Open;
 			//
-			i := 0;
 			IBQRFilhos.First;
+			Result := TList<TTabela>.Create;
 			while not IBQRFilhos.Eof do
 			begin
-				SetLength(Result, i + 1);
-				Result[i] := Relacionamento.Classe.Create(TFDConnection(IBQR.Connection));
-				Result[i].BuscaDadosTabela(IBQRFilhos.FieldByName(Self.CampoBusca).AsInteger, 1);
-				Inc(i);
+				Result.Add(TTabela(Relacionamento.Classe.Create(TFDConnection(Self.IBQR.Connection), TFDTransaction(Self.IBQR.Transaction))));
+				Result[Pred(Result.Count)].BuscaDadosTabela(IBQRFilhos.FieldByName(Self.CampoBusca).AsInteger, 1);
 				IBQRFilhos.Next;
 			end;
 		except
 			on E: Exception do
 			begin
-				if ((Pos('FIELD', UpperCase(E.Message)) > 0) and (Pos('NOT FOUND', UpperCase(E.Message)) > 0) or (Pos('TABLE UNKNOWN', UpperCase(E.Message)) > 0)) or (Pos('COLUMN UNKNOWN', UpperCase(E.Message)) > 0) and (Tentativa < 5) then
+				if ((Pos('FIELD', UpperCase(E.Message)) > 0) and (Pos('NOT FOUND', UpperCase(E.Message)) > 0) or (Pos('TABLE UNKNOWN', UpperCase(E.Message)) > 0)) and (Tentativa < 5) then
 				begin
 					// Caso alguma coluna não exista na tabela, ela será criada
-					Banco := TBanco.Create(TFDConnection(IBQRFilhos.Connection));
-					VarreCampos;
-					Banco.Tabelas.Add(Self);
-					Banco.Analisa;
-					Banco.DisposeOf;
-					BuscaDadosTabela(ValorBusca, Tentativa + 1);
+					CriaTabela;
+					BuscaListaFilhos(ValorBusca, Tentativa + 1, Relacionamento);
 				end
 				else
 					raise Exception.Create('Erro ao ler o valor de ' + Propriedades.Items[Propriedade].Nome + ' da Tabela ' + Self.Nome + '.' + #13#13 + E.Message);
@@ -485,6 +539,8 @@ begin
 		end;
 		//
 		IBQRFilhos.Close;
+		if IBQRBusca.Transaction.Active then
+			IBQRBusca.Transaction.Rollback;
 	finally
 		IBQRFilhos.DisposeOf
 	end;
@@ -498,6 +554,8 @@ end;
 procedure TTabela.BuscaPorCampo(_CampoBusca, ValorBusca: string; Tentativa: smallint);
 begin
 	try
+		if IBQRBusca.Transaction.Active then
+			IBQRBusca.Transaction.Rollback;
 		IBQRBusca.Close;
 		IBQRBusca.SQL.Clear;
 		IBQRBusca.SQL.Add('SELECT ' + Self.CampoBusca + ' FROM ' + Self.Nome + ' WHERE ' + _CampoBusca + ' = ' + '''' + ValorBusca + '''');
@@ -581,10 +639,22 @@ begin
 
 end;
 
+procedure TTabela.CriaTabela;
+var
+	Banco: TBanco;
+begin
+	Banco := TBanco.Create(TFDConnection(IBQR.Connection));
+	VarreCampos;
+	Banco.Tabelas.Add(Self);
+	Banco.Analisa;
+	Banco.DisposeOf;
+end;
+
 constructor TTabela.Create(BancoDeDados: TFDConnection; TransacaoExterna: TFDTransaction = nil);
 var
 	Propriedade   : TRttiProperty;
 	Relacionamento: TRelacionamento;
+	Transacao     : TFDTransaction;
 begin
 	{ Create a new Rtti context }
 	Contexto        := TRttiContext.Create;
@@ -593,18 +663,22 @@ begin
 	Relacionamentos := TDictionary<TRttiProperty, TRelacionamento>.Create;
 	VarreCampos;
 	//
-	IBQR            := TFDQuery.Create(nil);
-	IBQR.Connection := BancoDeDados;
+	Transacao            := TFDTransaction.Create(nil);
+	Transacao.Connection := BancoDeDados;
+	IBQR                 := TFDQuery.Create(nil);
+	IBQR.Connection      := BancoDeDados;
 	if TransacaoExterna <> nil then
-		IBQR.Transaction := TransacaoExterna;
+		IBQR.Transaction := TransacaoExterna
+	else
+		IBQR.Transaction := Transacao;
 	// Foram criados estes dois componentes exclusivos para busca, para permitir o Rollback antes da busca.
 	// Se não tiver componentes dedicados para busca, o rollback cancela os dados já inseridos por outras classes
 	TransacaoBusca            := TFDTransaction.Create(nil);
 	TransacaoBusca.Connection := BancoDeDados;
 	IBQRBusca                 := TFDQuery.Create(nil);
-  IBQRBusca.Connection 			:= BancoDeDados;
+	IBQRBusca.Connection      := BancoDeDados;
 	IBQRBusca.Transaction     := TransacaoBusca;
-  // busca relacionamentos e cria-os
+	// busca relacionamentos e cria-os
 	for Propriedade in Relacionamentos.Keys do
 	begin
 		if Relacionamentos.TryGetValue(Propriedade, Relacionamento) then
@@ -622,7 +696,7 @@ begin
 			end;
 		end;
 	end;
-  CriaTabela;
+	CriaTabela;
 end;
 
 destructor TTabela.Destroy;
@@ -636,6 +710,10 @@ begin
 		Relacionamentos.DisposeOf;
 	if Assigned(IBQR) then
 		IBQR.DisposeOf;
+	if Assigned(TransacaoBusca) then
+		TransacaoBusca.DisposeOf;
+	if Assigned(IBQRBusca) then
+		IBQRBusca.DisposeOf;
 	if Assigned(Campos) then
 		Campos.DisposeOf;
 	if Assigned(FBancoDeDados) then
@@ -678,24 +756,50 @@ begin
 	IBQRAux.DisposeOf;
 end;
 
-function TTabela.BuscaValorDataSet(Propriedade: TRttiProperty): TValue;
+function TTabela.IncrementaGenerator(NomeGenerator: string): integer;
+var
+	IBQRAux     : TFDQuery;
+	TransacaoAux: TFDTransaction;
 begin
-	// Joga o valor do banco de dados para a Propriedaded
+	TransacaoAux            := TFDTransaction.Create(nil);
+	TransacaoAux.Connection := IBQR.Connection;
+	IBQRAux                 := TFDQuery.Create(nil);
+	IBQRAux.Connection      := TransacaoAux.Connection;
+	IBQRAux.Transaction     := TransacaoAux;
+	try
+		IBQRAux.Close;
+		IBQRAux.SQL.Clear;
+		IBQRAux.SQL.Add('SELECT GEN_ID(' + NomeGenerator + ', 1) CODIGO FROM RDB$DATABASE');
+		IBQRAux.Open;
+		Result := IBQRAux.FieldByName('CODIGO').AsInteger;
+	except
+		on E: Exception do
+		begin
+			raise Exception.Create('Erro ao obter o valor do Generator ' + NomeGenerator + '!' + #13#13 + E.Message);
+		end;
+	end;
+	TransacaoAux.DisposeOf;
+	IBQRAux.DisposeOf;
+end;
+
+function TTabela.BuscaValorDataSet(Query: TDataset; Propriedade: TRttiProperty): TValue;
+begin
+	// Joga o valor do banco de dados para a Propriedade
 	case Propriedade.PropertyType.TypeKind of
 		tkInteger:
-			Result := IBQR.FieldByName(Propriedades.Items[Propriedade].Nome).AsInteger;
+			Result := Query.FieldByName(Propriedades.Items[Propriedade].Nome).AsInteger;
 		tkFloat:
-			Result := IBQR.FieldByName(Propriedades.Items[Propriedade].Nome).AsFloat;
+			Result := Query.FieldByName(Propriedades.Items[Propriedade].Nome).AsFloat;
 		tkChar, tkString, tkWChar, tkLString, tkUString:
-			Result := IBQR.FieldByName(Propriedades.Items[Propriedade].Nome).AsString;
+			Result := Query.FieldByName(Propriedades.Items[Propriedade].Nome).AsString;
 		tkWString:
-			Result := IBQR.FieldByName(Propriedades.Items[Propriedade].Nome).AsWideString;
+			Result := Query.FieldByName(Propriedades.Items[Propriedade].Nome).AsWideString;
 		tkVariant:
-			Result := IBQR.FieldByName(Propriedades.Items[Propriedade].Nome).AsString;
+			Result := Query.FieldByName(Propriedades.Items[Propriedade].Nome).AsString;
 		tkInt64:
-			Result := IBQR.FieldByName(Propriedades.Items[Propriedade].Nome).AsLargeInt;
+			Result := Query.FieldByName(Propriedades.Items[Propriedade].Nome).AsLargeInt;
 	else
-		Result := IBQR.FieldByName(Propriedades.Items[Propriedade].Nome).AsString;
+		Result := Query.FieldByName(Propriedades.Items[Propriedade].Nome).AsString;
 	end;
 end;
 
@@ -705,7 +809,7 @@ begin
 	Create(TFDConnection(BancoDeDados.GetListaConexoes[FIndiceConexao]));
 end;
 
-procedure TTabela.SalvaNoBanco(Tentativa: smallint = 0);
+procedure TTabela.SalvaNoBanco(Tentativa: smallint = 0; Comitar: Boolean = True);
 var
 	Propriedade : TRttiProperty;
 	Campo       : TCampo;
@@ -733,13 +837,20 @@ begin
 					InsereTabela.AddCamposEValores(Campo.Nome, Propriedade.GetValue(Self).AsInteger);
 				tkFloat:
 					begin
-						if (Propriedade.GetValue(Self).TypeInfo = TypeInfo(TDate)) or (Propriedade.GetValue(Self).TypeInfo = TypeInfo(TTime)) or (Propriedade.GetValue(Self).TypeInfo = TypeInfo(TDateTime)) then
+						if Propriedade.GetValue(Self).TypeInfo = TypeInfo(TDate) then
 						begin
-							if TDateTime(Propriedade.GetValue(Self).AsVariant).IsValid then
-								InsereTabela.AddCamposEValores(Campo.Nome, TDateTime(Propriedade.GetValue(Self).AsVariant))
+							if (TDateTime(Propriedade.GetValue(Self).AsVariant).IsValid) then
+								InsereTabela.AddCamposEValores(Campo.Nome, FormatDateTime('dd/mm/yyyy', Propriedade.GetValue(Self).AsVariant))
 						end
+						else if Propriedade.GetValue(Self).TypeInfo = TypeInfo(TDateTime) then
+						begin
+							if (TDateTime(Propriedade.GetValue(Self).AsVariant).IsValid) then
+								InsereTabela.AddCamposEValores(Campo.Nome, FormatDateTime('dd/mm/yyyy hh:mm:ss', Propriedade.GetValue(Self).AsVariant))
+						end
+						else if (Propriedade.GetValue(Self).TypeInfo = TypeInfo(TTime)) then
+							InsereTabela.AddCamposEValores(Campo.Nome, FormatDateTime('hh:mm:ss', Propriedade.GetValue(Self).AsVariant))
 						else
-							InsereTabela.AddCamposEValores(Campo.Nome, Propriedade.GetValue(Self).AsVariant)
+							InsereTabela.AddCamposEValores(Campo.Nome, Propriedade.GetValue(Self).AsVariant);
 					end;
 				tkString, tkWChar, tkLString, tkWString, tkVariant, tkUString:
 					InsereTabela.AddCamposEValores(Campo.Nome, Propriedade.GetValue(Self).AsString);
@@ -750,22 +861,33 @@ begin
 			end;
 		end;
 		InsereTabela.Command.Execute;
+		if Comitar then
+			if IBQR.Transaction.Active then
+				IBQR.Transaction.Commit;
 	except
 		on E: Exception do
 		begin
+			if Comitar then
+			begin
+				if IBQR.Transaction.Active then
+					IBQR.Transaction.Rollback;
+			end;
 			if ((Pos('COLUMN UNKNOWN', UpperCase(E.Message)) > 0) or (Pos('TABLE UNKNOWN', UpperCase(E.Message)) > 0)) and (Tentativa < 5) then
 			begin
 				// Caso alguma coluna não exista na tabela, ela será criada
-				Banco := TBanco.Create(TFDConnection(IBQR.Connection));
-				VarreCampos;
-				Banco.Tabelas.Add(Self);
-				Banco.Analisa;
-				Banco.DisposeOf;
-				SalvaNoBanco(Tentativa + 1);
+				CriaTabela;
+				SalvaNoBanco(Tentativa + 1, Comitar);
 			end
 			else
 				raise Exception.Create('Erro ao gravar o valor de ' + Campo.Nome + ' da Tabela ' + Self.Nome + '.' + #13#13 + E.Message);
 		end;
+	end;
+	//
+	if Comitar then
+	begin
+		IBQR.Close;
+		if IBQR.Transaction.Active then
+			IBQR.Transaction.Rollback;
 	end;
 	{$ENDIF}
 end;
@@ -811,15 +933,10 @@ begin
 	end;
 end;
 
-procedure TTabela.CriaTabela;
-var
-	Banco: TBanco;
+procedure TTabela.Commit;
 begin
-	Banco := TBanco.Create(TFDConnection(IBQR.Connection));
-	VarreCampos;
-	Banco.Tabelas.Add(Self);
-	Banco.Analisa;
-	Banco.DisposeOf;
+	if IBQR.Transaction.Active then
+		IBQR.Transaction.Commit;
 end;
 
 { procedure TTabela.BuscaPorCampos(_CamposBusca, ValoresBusca: array of string;
@@ -858,7 +975,7 @@ end;
 
 function THelperDateTime.IsValid: Boolean;
 begin
-	Result := (FormatDateTime('dd/mm/yy', Self) <> '30/12/99');
+	Result := FormatDateTime('dd/mm/yyyy', Self) <> '30/12/1899';
 end;
 
 end.

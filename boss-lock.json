@@ -5,7 +5,7 @@
 		"https://github.com/cachopaweb/clientrest": {
 			"name": "clientrest",
 			"version": "1.0.6",
-			"hash": "773498f141c034088b995dea485d2f44",
+			"hash": "426550e06ce9c88ea6b39c5a886395dc",
 			"artifacts": {},
 			"failed": false,
 			"changed": false
@@ -13,7 +13,7 @@
 		"https://github.com/cachopaweb/factory-connections": {
 			"name": "factory-connections",
 			"version": "v1.0.3",
-			"hash": "dd2506e1ff0fd0b4e07f0347972f12f6",
+			"hash": "43f963dff45c528d8c9028aaf3ebb002",
 			"artifacts": {},
 			"failed": false,
 			"changed": false
