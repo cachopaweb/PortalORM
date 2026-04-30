@@ -696,7 +696,6 @@ begin
 			end;
 		end;
 	end;
-	CriaTabela;
 end;
 
 destructor TTabela.Destroy;
