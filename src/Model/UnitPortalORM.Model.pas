@@ -606,6 +606,18 @@ begin
 		Relacionamentos.DisposeOf;
 	if Assigned(IBQR) then
 		IBQR.DisposeOf;
+	if Assigned(IBQRBusca) then
+	begin
+		if IBQRBusca.Active then
+			IBQRBusca.Close;
+		IBQRBusca.DisposeOf;
+	end;
+	if Assigned(TransacaoBusca) then
+	begin
+		if TransacaoBusca.Active then
+			TransacaoBusca.Rollback;
+		TransacaoBusca.DisposeOf;
+	end;
 	if Assigned(Campos) then
 		Campos.DisposeOf;
 	if Assigned(FBancoDeDados) then
