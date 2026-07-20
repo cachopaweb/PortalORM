@@ -683,6 +683,7 @@ end;
 
 constructor TTabela.Create(BancoDeDados: iConnection);
 begin
+	FBancoDeDados  := BancoDeDados;
 	FIndiceConexao := BancoDeDados.Connected;
 	Create(TFDConnection(BancoDeDados.GetListaConexoes[FIndiceConexao]));
 end;
